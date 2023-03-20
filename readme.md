@@ -129,6 +129,47 @@ Update-Database -Context SqlSeerverContext
 
 **Nota:** por el momento, mantendremos comentada la sentencia de la conexión alternativa a la BBDD de Azure, para continuar trabajando con la BBDD de SqlServer en local.
 
+## 1.3. Añadir campos a la tabla AspNetUsers
+
+### 1.3.1. Models --> ApplicationUser.cs
+
+Los campos que trae por defecto la tabla del usuario de Identity son limitados, y si queremos añadir más campos, como por ejemplo, un *username*, tenemos que crear nuestra propia clase de usuario la cual hereda de *IdentityUser*
+
+```csharp
+public class ApplicationUser : IdentityUser
+{
+    public string Name { get; set; }
+}
+```
+
+### 1.3.2. Actualizar el Program.cs
+
+```csharp
+// Add Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<SqlServerContext>();
+```
+
+### 1.3.3. DbContexts --> SqlServerContext.cs
+
+Especificamos a EntityFramework la nueva clase del usuario
+
+```csharp
+public class SqlServerContext : IdentityDbContext<ApplicationUser>
+{
+    public SqlServerContext(DbContextOptions options) : base(options)
+    {
+    }
+
+    public DbSet<ApplicationUser> ApplicationUsersDbSet { get; set; }
+}
+```
+
+### 1.3.4. Nueva migración
+
+Creamos una nueva migración y la pusheamos a nuestra BBDD local, y efectivamente comprobamos que ya tenemos el nuevo campos del *name* del usuario.
+
+![](./img/6.png)
+
 # Webgrafía y Enlaces de Interés
 
 ## [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
