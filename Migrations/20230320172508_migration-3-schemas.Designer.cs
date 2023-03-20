@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using eFoodDelivery_API.DbContexts;
 
@@ -11,9 +12,11 @@ using eFoodDelivery_API.DbContexts;
 namespace eFoodDelivery_API.Migrations
 {
     [DbContext(typeof(SqlServerContext))]
-    partial class SqlServerContextModelSnapshot : ModelSnapshot
+    [Migration("20230320172508_migration-3-schemas")]
+    partial class migration3schemas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -223,59 +226,6 @@ namespace eFoodDelivery_API.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("dlk_users", "dlk_efooddelivery_api");
-                });
-
-            modelBuilder.Entity("eFoodDelivery_API.Models.Product", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Category")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)")
-                        .HasColumnName("Category");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(60)
-                        .HasColumnType("nvarchar(60)")
-                        .HasColumnName("Description");
-
-                    b.Property<string>("Image")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Image");
-
-                    b.Property<DateTime>("Md_date")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("Md_date");
-
-                    b.Property<Guid>("Md_uuid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("Md_uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("nvarchar(25)")
-                        .HasColumnName("Name");
-
-                    b.Property<double>("Price")
-                        .HasColumnType("float")
-                        .HasColumnName("Price");
-
-                    b.Property<string>("Tag")
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)")
-                        .HasColumnName("Tag");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("product", "dwh_efooddelivery_api");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

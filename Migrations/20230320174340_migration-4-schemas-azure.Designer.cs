@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using eFoodDelivery_API.DbContexts;
 
@@ -11,9 +12,11 @@ using eFoodDelivery_API.DbContexts;
 namespace eFoodDelivery_API.Migrations
 {
     [DbContext(typeof(SqlServerContext))]
-    partial class SqlServerContextModelSnapshot : ModelSnapshot
+    [Migration("20230320174340_migration-4-schemas-azure")]
+    partial class migration4schemasazure
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -229,49 +232,29 @@ namespace eFoodDelivery_API.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
+                        .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Category")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)")
-                        .HasColumnName("Category");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(60)
-                        .HasColumnType("nvarchar(60)")
-                        .HasColumnName("Description");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Image")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Image");
-
-                    b.Property<DateTime>("Md_date")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("Md_date");
-
-                    b.Property<Guid>("Md_uuid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("Md_uuid");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("nvarchar(25)")
-                        .HasColumnName("Name");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Price")
-                        .HasColumnType("float")
-                        .HasColumnName("Price");
+                        .HasColumnType("float");
 
                     b.Property<string>("Tag")
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)")
-                        .HasColumnName("Tag");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

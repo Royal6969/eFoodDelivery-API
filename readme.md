@@ -14,6 +14,10 @@
 - Microsoft.EntityFrameworkCore.SqlServer
 - Azure.Storage.Blobs
 
+## 0.2. Ejecución inicial de prueba
+
+![](./img/7.png)
+
 # 1. Conexión con BBDD
 
 ## 1.1. Conexión con SqlServer
@@ -129,7 +133,7 @@ Update-Database -Context SqlSeerverContext
 
 **Nota:** por el momento, mantendremos comentada la sentencia de la conexión alternativa a la BBDD de Azure, para continuar trabajando con la BBDD de SqlServer en local.
 
-## 1.3. Añadir campos a la tabla AspNetUsers
+## 1.3. Añadir campos a la tabla AspNetUsers y cambiar los nombres de las tablas
 
 ### 1.3.1. Models --> ApplicationUser.cs
 
@@ -170,13 +174,101 @@ Creamos una nueva migración y la pusheamos a nuestra BBDD local, y efectivament
 
 ![](./img/6.png)
 
+### 1.3.5. Cambiar los nombres por defecto de las tablas de Identity
+
+[Cambiar los nombres por defecto de las tablas de Identity](#cambiar-los-nombres-por-defecto-de-las-tablas-de-identity)
+
+## 1.4. Product entity
+
+### 1.4.1. Models --> Product.cs
+
+Vamos a crear nuestra primera entidad, la del Producto.
+
+```csharp
+[Table("product", Schema = "dwh_efooddelivery_api")]
+public class Product
+{
+    [Column("Md_uuid")]
+    [Display(Name = "Md_uuid")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Md_uuid { get; set; } = Guid.NewGuid();
+
+    [Column("Md_date")]
+    [Display(Name = "Md_date")]
+    [DataType(DataType.DateTime)]
+    [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
+    public DateTime Md_date { get; set; } = DateTime.Now;
+
+    [Key]
+    [Column("Id")]
+    [Display(Name = "Id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
+        
+    [Required]
+    [Column("Name")]
+    [Display(Name = "Name")]
+    [StringLength(25, ErrorMessage = "El nombre del producto no puede exceder los 25 caracteres")]
+    public string Name { get; set; }
+
+    [Column("Description")]
+    [Display(Name = "Description")]
+    [StringLength(60, ErrorMessage = "La descripción del producto no puede exceder los 60 caracteres")]
+    public string Description { get; set; }
+
+    [Column("Tag")]
+    [Display(Name = "Tag")]
+    [StringLength(15, ErrorMessage = "La etiqueta del producto no puede exceder los 15 caracteres")]
+    public string Tag { get; set; }
+
+    [Column("Category")]
+    [Display(Name = "Category")]
+    [StringLength(10, ErrorMessage = "La categoría del producto no puede exceder los 10 caracteres")]
+    public string Category { get; set; }
+
+    [Column("Price")]
+    [Display(Name = "Price")]
+    [Range(1, 99, ErrorMessage = "El precio del producto no puede ser mayor a 99,00€")]
+    public double Price { get; set; }
+
+    [Required]
+    [Column("Image")]
+    [Display(Name = "Image")]
+    public string Image { get; set; }
+}
+```
+
+### 1.4.2. DbContexts --> sqlServerContext.cs
+
+Añadimos el DbSet de la entiddad *Product*
+
+```csharp
+// navigation properties for entities (also it creates the tables)
+public DbSet<ApplicationUser> ApplicationUsersDbSet { get; set; }
+public DbSet<Product> ProductsDbSet { get; set; }
+```
+
+### 1.4.3. Creamos una nueva migración y pusheamos a la BBDD
+
+```bash
+Add-Migration migration-sqlserver-4-product -Context SqlServerContext
+```
+
+```bash
+Update-Database -Context SqlSeerverContext
+```
+
+![](./img/9.png)
+
 # Webgrafía y Enlaces de Interés
 
 ## [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
 
+## [How can I change the table names when using ASP.NET Identity?](https://stackoverflow.com/questions/19460386/how-can-i-change-the-table-names-when-using-asp-net-identity)
+
 # Extras
 
-## Crear la BBDD en Azure
+## 1. Crear la BBDD en Azure
 
 ![](./img/AzureDb/1.png)
 ![](./img/AzureDb/2.png)
@@ -190,7 +282,7 @@ Creamos una nueva migración y la pusheamos a nuestra BBDD local, y efectivament
 ![](./img/AzureDb/10.png)
 ![](./img/AzureDb/11.png)
 
-## Crear el Azure Storage para nuestras imágenes
+## 2. Crear el Azure Storage para nuestras imágenes
 
 ![](./img/AzureImagenes/1.png)
 ![](./img/AzureImagenes/2.png)
@@ -198,3 +290,49 @@ Creamos una nueva migración y la pusheamos a nuestra BBDD local, y efectivament
 ![](./img/AzureImagenes/4.png)
 ![](./img/AzureImagenes/5.png)
 ![](./img/AzureImagenes/6.png)
+
+## 3. Cambiar los nombres por defecto de las tablas de Identity
+
+### DbContexts --> UserEntityConfiguration.cs
+
+```csharp
+public class UserEntityConfiguration : IEntityTypeConfiguration<ApplicationUser>
+{
+    public void Configure(EntityTypeBuilder<ApplicationUser> builder)
+    {
+        builder.Property(user => user.Name).HasMaxLength(20);
+    }
+}
+```
+
+### DbContexts --> SqlServerContext.cs
+
+```csharp
+// overrriding the OnModelCreating() method for customize our entities (tables)
+protected override void OnModelCreating(ModelBuilder builder)
+{
+    base.OnModelCreating(builder);
+    builder.ApplyConfiguration(new UserEntityConfiguration());
+    builder.HasDefaultSchema("dlk_efooddelivery_api");
+
+    builder.Entity<ApplicationUser>().ToTable("dlk_users");
+    builder.Entity<IdentityRole>().ToTable("dlk_roles");
+    builder.Entity<IdentityUserRole<string>>().ToTable("dlk_user_roles");
+    builder.Entity<IdentityRoleClaim<string>>().ToTable("dlk_role_claim");
+    builder.Entity<IdentityUserClaim<string>>().ToTable("dlk_user_claim");
+    builder.Entity<IdentityUserLogin<string>>().ToTable("dlk_user_login");
+    builder.Entity<IdentityUserToken<string>>().ToTable("dlk_user_tokens");
+}
+```
+
+### Creamos una nueva migración y la pusheamos a la BBDD
+
+```bash
+Add-Migration migration-sqlserver-3-users -Context SqlServerContext
+```
+
+```bash
+Update-Database -Context SqlSeerverContext
+```
+
+![](./img/8.png)
