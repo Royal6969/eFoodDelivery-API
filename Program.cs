@@ -1,8 +1,22 @@
+using eFoodDelivery_API.DbContexts;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
+
+// Add connection strings for DbContexts
+builder.Services.AddDbContext<SqlServerContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServerConnection"));
+});
+
+// Add Identity
+builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<SqlServerContext>();
+
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
