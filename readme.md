@@ -341,9 +341,11 @@ Update-Database -Context SqlSeerverContext
 
 # 2. Controlador del producto
 
-Creamos un controlador API para la entidad del Producto para obtener todos los productos de la BBDD.
+Creamos un controlador API para la entidad del Producto para desarrollar su CRUD.
 
-## 2.1. Models --> ApiResponse.cs
+## 2.1. GetProducts()
+
+### 2.1.1. Models --> ApiResponse.cs
 
 Necesitamos un modelo de lo que sería la respuesta de la petición get al servidor, la cual podremos controlar mejor si declaramos algunas propiedades para después utilizarlas en el controlador del producto.
 
@@ -362,7 +364,7 @@ public class ApiResponse
 }
 ```
 
-## 2.2. Controllers --> ProductController.cs
+## 2.1.2. Controllers --> ProductController.cs
 
 ```csharp
 // [Route("api/[controller]")] // instead a dynamic route, if I change the controller name, the route does not get updated
@@ -391,7 +393,7 @@ public class ProductController : ControllerBase
 }
 ```
 
-## 2.3. Prueba de ejecución
+## 2.1.3. Prueba de ejecución
 
 Ejecutamos el proyecto, y en Swagger, le damos al GET del endpoint de nuestro producto, y confirmamos que obtenemos todos los productos de prueba que previamente insertamos en la BBDD.
 
@@ -401,7 +403,39 @@ Ejecutamos el proyecto, y en Swagger, le damos al GET del endpoint de nuestro pr
 
 ![](./img/13.png)
 
+## 2.2. GetProduct(int id)
 
+### 2.2.1. Controllers --> ProductController.cs
+
+```csharp
+[HttpGet("{id:int}")] // like this method has a parameter, I need to specify what parameter is (name:type)
+public async Task<IActionResult> GetProduct(int id)
+{
+    if (id == 0) // check for BadRequest
+    {
+        _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+        return BadRequest(_apiResponse);
+    }
+            
+    Product product = _dbContext.ProductsDbSet.FirstOrDefault(p => p.Id == id);
+            
+    if(product == null) // check for NotFound
+    {
+        _apiResponse.StatusCode = HttpStatusCode.NotFound;
+        return NotFound(_apiResponse);
+    }
+
+    _apiResponse.Result = product;
+    _apiResponse.StatusCode = HttpStatusCode.OK;
+    return Ok(_apiResponse);
+}
+```
+
+## 2.2.2. Prueba de ejecución
+
+![](./img/14.png)
+
+![](./img/15.png)
 
 # Webgrafía y Enlaces de Interés
 
