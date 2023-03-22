@@ -98,7 +98,7 @@ Este comando nos genera dos archivos, y en el principal de ellos, EntityFramewor
 El segundo comando que vamos a ejecutar es para que EntityFramework nos cree la BBDD y sus correspondientes tablas en nuestro SqlServer
 
 ```bash
-Update-Database -Context SqlSeerverContext
+Update-Database -Context SqlServerContext
 ```
 
 ![](./img/3.png)
@@ -125,7 +125,7 @@ Añadimos el string de la conexión alternativa a nuestra BBDD en Azure
 ### 1.2.3. ReMigramos las tablas de Identity
 
 ```bash
-Update-Database -Context SqlSeerverContext
+Update-Database -Context SqlServerContext
 ```
 
 ![](./img/4.png)
@@ -295,11 +295,49 @@ Add-Migration m2-product -Context SqlServerContext
 ```
 
 ```bash
-Update-Database -Context SqlSeerverContext
+Update-Database -Context SqlServerContext
 ```
 
 ![](./img/9.png)
 
+## 1.5 Añadir productos a la BBDD
+
+Para poder testear bien las siguientes funcionalidades propias de un CRUD que desarrollaré en los siguientes apartados, necesito algunos productos de prueba y de base con los que empezar, y para ello usaré un objeto del tipo ModelBuilder en el contexto, para realizar algunos insert de productos en una nueva migración.
+
+### 1.5.1. DbContexts --> SqlServerContext.cs
+
+Siguiendo con el método del OnModelCreating(ModelBuilder) ...
+
+```csharp
+builder.Entity<Product>().HasData(
+    // vamos añadiendo productos de ejemplo aquí
+    new Product
+    {
+        Md_uuid = Guid.NewGuid(),
+        Md_date = DateTime.Now,
+        Id = 1,
+        Name = "Paella Valenciana",
+        Description = "Receta de cocina con base de arroz, con origen en la actual Comunidad Valenciana, hoy en día muy popular en toda España y servida en restaurantes de todo el mundo.​",
+        Tag = "Mejor valorados",
+        Category = "Almuerzo",
+        Price = 9.95,
+        Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/1.paella-nobg.png"
+    },
+    ...
+);
+```
+
+### 1.5.2. Nueva migración y a la pushear a la BBDD
+
+```bash
+Add-Migration m3-sd-product -Context SqlServerContext
+```
+
+```bash
+Update-Database -Context SqlSeerverContext
+```
+
+![](./img/10.png)
 
 
 # Webgrafía y Enlaces de Interés
@@ -370,11 +408,11 @@ protected override void OnModelCreating(ModelBuilder builder)
 ### Creamos una nueva migración y la pusheamos a la BBDD
 
 ```bash
-Add-Migration migration-sqlserver-3-users -Context SqlServerContext
+Add-Migration m1-identity -Context SqlServerContext
 ```
 
 ```bash
-Update-Database -Context SqlSeerverContext
+Update-Database -Context SqlServerContext
 ```
 
 ![](./img/8.png)
