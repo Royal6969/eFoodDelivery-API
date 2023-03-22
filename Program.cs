@@ -1,5 +1,8 @@
+using Azure.Storage.Blobs;
 using eFoodDelivery_API.DbContexts;
 using eFoodDelivery_API.Models;
+using eFoodDelivery_API.Services.Implementations;
+using eFoodDelivery_API.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +20,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
 
+// activate Azure.Storage.Blobs nuget package
+builder.Services.AddSingleton(blobService => // Singleton means there will only be one object when the application starts
+    new BlobServiceClient(
+        builder.Configuration.GetConnectionString("AzureImagesStorage")        
+    )
+);
+builder.Services.AddSingleton<IBlobService, BlobService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

@@ -437,6 +437,134 @@ public async Task<IActionResult> GetProduct(int id)
 
 ![](./img/15.png)
 
+## 2.3. Gestión de imágenes
+
+Antes de seguir con el CRUD del Producto (create, update y delete), necesitamos implementar el tratamiento de las imágenes de los productos.
+
+**Nota:** aquí es donde voy a usar el paquete NuGet de Azure.Storage.Blob
+
+### 2.3.1. Services --> Interfaces --> IBlobService.cs
+
+```csharp
+public interface IBlobService
+{
+    Task<string> GetBlob(string blobName, string containerName);
+
+    Task<string> UploadBlob(string blobName, string containerName, IFormFile file);
+        
+    Task<bool> DeleteBlob(string blobName, string containerName);
+}
+```
+
+### 2.3.2. Services --> Implementations --> BlobService.cs
+
+```csharp
+public class BlobService : IBlobService
+{
+    public Task<string> GetBlob(string blobName, string containerName)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> UploadBlob(string blobName, string containerName, IFormFile file)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> DeleteBlob(string blobName, string containerName)
+    {
+        throw new NotImplementedException();
+    }
+}
+```
+
+### 2.3.3. appsettings.json
+
+Aquí tenemos que añadir un nuevo string de conexión, el cual necesito sacarlo de AzureStorage donde ya había creado antes mi contenedor de imágenes y había subido las mismas.
+
+![](./img/16.png)
+
+![](./img/17.png)
+
+```json
+"ConnectionStrings": {
+    ...
+    "AzureImagesStorage": "TuCadenaDeConexión"
+}
+```
+
+### 2.3.4. Añadir los servicios Blob en el Program.cs
+
+```csharp
+...
+// activate Azure.Storage.Blobs nuget package
+builder.Services.AddSingleton(blobService => // Singleton means there will only be one object when the application starts
+    new BlobServiceClient(
+        builder.Configuration.GetConnectionString("AzureImagesStorage")        
+    )
+);
+builder.Services.AddSingleton<IBlobService, BlobService>();
+...
+```
+
+### 2.3.5. Desarrollo de los métodos de implementación del BlobService
+
+```csharp
+public class BlobService : IBlobService
+{
+    private readonly BlobServiceClient _blobServiceClient;
+
+    public BlobService(BlobServiceClient blobServiceClient)
+    {
+        _blobServiceClient = blobServiceClient;
+    }
+
+    public async Task<string> GetBlob(string blobName, string containerName)
+    {
+        // we have to get the container client, because in Azure we can have multiple containers for storage images
+        BlobContainerClient blobContainerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        // find blob (image) by blobName (imageName)
+        BlobClient blobClient = blobContainerClient.GetBlobClient(blobName);
+
+        // return full route for the blob (image)
+        return blobClient.Uri.AbsoluteUri;
+    }
+
+    public async Task<string> UploadBlob(string blobName, string containerName, IFormFile file)
+    {
+        // we have to get the container client, because in Azure we can have multiple containers for storage images
+        BlobContainerClient blobContainerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        // find blob (image) by blobName (imageName)
+        BlobClient blobClient = blobContainerClient.GetBlobClient(blobName);
+
+        // we can also define blob HTTP header and set the content type
+        var httpHeaders = new BlobHttpHeaders()
+        {
+            ContentType = file.ContentType
+        };
+
+        // upload the blob (image)
+        var result = await blobClient.UploadAsync(file.OpenReadStream(), httpHeaders);
+
+        if (result != null) // to get the blob updated
+            return await GetBlob(blobName, containerName);
+
+        // if (result == null)
+            return "";
+    }
+
+    public async Task<bool> DeleteBlob(string blobName, string containerName)
+    {
+        // we have to get the container client, because in Azure we can have multiple containers for storage images
+        BlobContainerClient blobContainerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        // find blob (image) by blobName (imageName)
+        BlobClient blobClient = blobContainerClient.GetBlobClient(blobName);
+
+        return await blobClient.DeleteIfExistsAsync();
+    }
+}
+```
+
 # Webgrafía y Enlaces de Interés
 
 ## [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
