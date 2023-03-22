@@ -11,7 +11,7 @@ using eFoodDelivery_API.DbContexts;
 
 namespace eFoodDelivery_API.Migrations
 {
-    [DbContext(typeof(SqlServerContext))]
+    [DbContext(typeof(ApplicationDbContext))]
     [Migration("20230322131751_m3-sd-product")]
     partial class m3sdproduct
     {

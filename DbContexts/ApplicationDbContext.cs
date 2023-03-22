@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace eFoodDelivery_API.DbContexts
 {
-    public class SqlServerContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         // contructor needed for context
-        public SqlServerContext(DbContextOptions options) : base(options)
+        public ApplicationDbContext(DbContextOptions options) : base(options)
         {
         }
 

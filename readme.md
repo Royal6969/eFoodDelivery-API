@@ -32,14 +32,14 @@ Para ello vamos al *appsettings.json* y añadimos nuestro *ConnectionStrings*
   }
 ```
 
-### 1.1.2. DbContexts --> SqlServerContext.cs
+### 1.1.2. DbContexts --> ApplicationDbContext.cs
 
 Creamos una nueva carpeta para albergar nuestros DbContexts, y creamos la clase de nuestra conexión a SqlServer
 
 ```csharp
-public class SqlServerContext : IdentityDbContext
+public class ApplicationDbContext : IdentityDbContext
 {
-    public SqlServerContext(DbContextOptions options) : base(options)
+    public ApplicationDbContext(DbContextOptions options) : base(options)
     {
     }
 }
@@ -49,12 +49,12 @@ public class SqlServerContext : IdentityDbContext
 
 ```csharp
 // Add services to the container.
-builder.Services.AddDbContext<SqlServerContext>(options =>
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServerConnection"));
 });
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<SqlServerContext>();
+builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
 ```
 
 ### 1.1.4. Realizamos la primera migración a BBDD
@@ -62,7 +62,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkSto
 Abrimos la consola de paquetes NuGets para ejecutar los siguientes comandos:
 
 ```bash
-Add-Migration m1-identity -Context SqlServerContext
+Add-Migration m1-identity -Context ApplicationDbContext
 ```
 
 Este comando nos genera dos archivos, y en el principal de ellos, EntityFramework nos ha creado un script sql para la creación de las tablas de Identity, las cuales engloban todo lo relacionado con la gestión de los usuarios de nuestra web, facilitándonos sobretodo el login, register y roles.
@@ -98,7 +98,7 @@ Este comando nos genera dos archivos, y en el principal de ellos, EntityFramewor
 El segundo comando que vamos a ejecutar es para que EntityFramework nos cree la BBDD y sus correspondientes tablas en nuestro SqlServer
 
 ```bash
-Update-Database -Context SqlServerContext
+Update-Database -Context ApplicationDbContext
 ```
 
 ![](./img/3.png)
@@ -125,7 +125,7 @@ Añadimos el string de la conexión alternativa a nuestra BBDD en Azure
 ### 1.2.3. ReMigramos las tablas de Identity
 
 ```bash
-Update-Database -Context SqlServerContext
+Update-Database -Context ApplicationDbContext
 ```
 
 ![](./img/4.png)
@@ -150,7 +150,7 @@ public class ApplicationUser : IdentityUser
 
 ```csharp
 // Add Identity
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<SqlServerContext>();
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
 ```
 
 ### 1.3.3. DbContexts --> UserEntityConfiguration.cs
@@ -165,14 +165,14 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<ApplicationUser>
 }
 ```
 
-### 1.3.4. DbContexts --> SqlServerContext.cs
+### 1.3.4. DbContexts --> ApplicationDbContext.cs
 
 Especificamos a EntityFramework la nueva clase del usuario
 
 ```csharp
-public class SqlServerContext : IdentityDbContext<ApplicationUser>
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
-    public SqlServerContext(DbContextOptions options) : base(options)
+    public ApplicationDbContext(DbContextOptions options) : base(options)
     {
     }
 
@@ -198,7 +198,7 @@ Creamos una nueva migración y la pusheamos a nuestra BBDD local, y efectivament
 [Cambiar los nombres por defecto de las tablas de Identity](#cambiar-los-nombres-por-defecto-de-las-tablas-de-identity)
 
 ```csharp
-public class SqlServerContext : IdentityDbContext<ApplicationUser>
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     ...
     // overrriding the OnModelCreating() method for customize our entities (tables)
@@ -291,11 +291,11 @@ public DbSet<Product> ProductsDbSet { get; set; }
 ### 1.4.3. Creamos una nueva migración y pusheamos a la BBDD
 
 ```bash
-Add-Migration m2-product -Context SqlServerContext
+Add-Migration m2-product -Context ApplicationDbContext
 ```
 
 ```bash
-Update-Database -Context SqlServerContext
+Update-Database -Context ApplicationDbContext
 ```
 
 ![](./img/9.png)
@@ -304,7 +304,7 @@ Update-Database -Context SqlServerContext
 
 Para poder testear bien las siguientes funcionalidades propias de un CRUD que desarrollaré en los siguientes apartados, necesito algunos productos de prueba y de base con los que empezar, y para ello usaré un objeto del tipo ModelBuilder en el contexto, para realizar algunos insert de productos en una nueva migración.
 
-### 1.5.1. DbContexts --> SqlServerContext.cs
+### 1.5.1. DbContexts --> ApplicationDbContext.cs
 
 Siguiendo con el método del OnModelCreating(ModelBuilder) ...
 
@@ -330,7 +330,7 @@ builder.Entity<Product>().HasData(
 ### 1.5.2. Nueva migración y a la pushear a la BBDD
 
 ```bash
-Add-Migration m3-sd-product -Context SqlServerContext
+Add-Migration m3-sd-product -Context ApplicationDbContext
 ```
 
 ```bash
@@ -338,6 +338,69 @@ Update-Database -Context SqlSeerverContext
 ```
 
 ![](./img/10.png)
+
+# 2. Controlador del producto
+
+Creamos un controlador API para la entidad del Producto para obtener todos los productos de la BBDD.
+
+## 2.1. Models --> ApiResponse.cs
+
+Necesitamos un modelo de lo que sería la respuesta de la petición get al servidor, la cual podremos controlar mejor si declaramos algunas propiedades para después utilizarlas en el controlador del producto.
+
+```csharp
+public class ApiResponse
+{
+    public HttpStatusCode StatusCode { get; set; } // eg: 404
+    public bool Success { get; set; } // true or false
+    public List<string> ErrorsList { get; set; } // eg: "there's no products avaible right now"
+    public object Result { get; set; } // object fetched
+    
+    public ApiResponse() 
+    {
+        ErrorsList = new List<string>();
+    }
+}
+```
+
+## 2.2. Controllers --> ProductController.cs
+
+```csharp
+// [Route("api/[controller]")] // instead a dynamic route, if I change the controller name, the route does not get updated
+[Route("api/Product")]
+[ApiController]
+public class ProductController : ControllerBase
+{
+    private readonly ApplicationDbContext _dbContext; // read property for our context
+    private ApiResponse _apiResponse; // property for our API response
+
+    public ProductController(ApplicationDbContext dbContext) // dependency injection
+    {
+        _dbContext = dbContext;
+        _apiResponse = new ApiResponse();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetProducts()
+    {
+        // return Ok(_dbContext.ProductsDbSet); // it will go to DB and fetch all products and return back, but I want to get better control for api response
+
+        _apiResponse.Result = _dbContext.ProductsDbSet;
+        _apiResponse.StatusCode = HttpStatusCode.OK;
+        return Ok(_apiResponse);
+    }
+}
+```
+
+## 2.3. Prueba de ejecución
+
+Ejecutamos el proyecto, y en Swagger, le damos al GET del endpoint de nuestro producto, y confirmamos que obtenemos todos los productos de prueba que previamente insertamos en la BBDD.
+
+![](./img/11.png)
+
+![](./img/12.png)
+
+![](./img/13.png)
+
 
 
 # Webgrafía y Enlaces de Interés
@@ -385,7 +448,7 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<ApplicationUser>
 }
 ```
 
-### DbContexts --> SqlServerContext.cs
+### DbContexts --> ApplicationDbContext.cs
 
 ```csharp
 // overrriding the OnModelCreating() method for customize our entities (tables)
@@ -408,11 +471,11 @@ protected override void OnModelCreating(ModelBuilder builder)
 ### Creamos una nueva migración y la pusheamos a la BBDD
 
 ```bash
-Add-Migration m1-identity -Context SqlServerContext
+Add-Migration m1-identity -Context ApplicationDbContext
 ```
 
 ```bash
-Update-Database -Context SqlServerContext
+Update-Database -Context ApplicationDbContext
 ```
 
 ![](./img/8.png)

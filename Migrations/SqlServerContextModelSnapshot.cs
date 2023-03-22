@@ -10,7 +10,7 @@ using eFoodDelivery_API.DbContexts;
 
 namespace eFoodDelivery_API.Migrations
 {
-    [DbContext(typeof(SqlServerContext))]
+    [DbContext(typeof(ApplicationDbContext))]
     partial class SqlServerContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
