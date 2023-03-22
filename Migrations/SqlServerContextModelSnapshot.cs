@@ -156,6 +156,59 @@ namespace eFoodDelivery_API.Migrations
                     b.ToTable("dlk_user_tokens", "dlk_efooddelivery_api");
                 });
 
+            modelBuilder.Entity("eFoodDelivery_API.Entities.Product", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("Id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Category");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("Description");
+
+                    b.Property<string>("Image")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Image");
+
+                    b.Property<DateTime>("Md_date")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("Md_date");
+
+                    b.Property<Guid>("Md_uuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("Md_uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasColumnName("Name");
+
+                    b.Property<double>("Price")
+                        .HasColumnType("float")
+                        .HasColumnName("Price");
+
+                    b.Property<string>("Tag")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("Tag");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("product", "dwh_efooddelivery_api");
+                });
+
             modelBuilder.Entity("eFoodDelivery_API.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -223,59 +276,6 @@ namespace eFoodDelivery_API.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("dlk_users", "dlk_efooddelivery_api");
-                });
-
-            modelBuilder.Entity("eFoodDelivery_API.Models.Product", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Category")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)")
-                        .HasColumnName("Category");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(60)
-                        .HasColumnType("nvarchar(60)")
-                        .HasColumnName("Description");
-
-                    b.Property<string>("Image")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Image");
-
-                    b.Property<DateTime>("Md_date")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("Md_date");
-
-                    b.Property<Guid>("Md_uuid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("Md_uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("nvarchar(25)")
-                        .HasColumnName("Name");
-
-                    b.Property<double>("Price")
-                        .HasColumnType("float")
-                        .HasColumnName("Price");
-
-                    b.Property<string>("Tag")
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)")
-                        .HasColumnName("Tag");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("product", "dwh_efooddelivery_api");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

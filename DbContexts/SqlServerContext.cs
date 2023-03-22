@@ -1,4 +1,5 @@
-﻿using eFoodDelivery_API.Models;
+﻿using eFoodDelivery_API.Entities;
+using eFoodDelivery_API.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -20,9 +21,10 @@ namespace eFoodDelivery_API.DbContexts
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-            builder.ApplyConfiguration(new UserEntityConfiguration());
-            builder.HasDefaultSchema("dlk_efooddelivery_api");
+            builder.ApplyConfiguration(new UserEntityConfiguration());  // apply IdentityUser changes
+            builder.HasDefaultSchema("dlk_efooddelivery_api");          // default schema for Identity tables
 
+            // changing names for Identity tables
             builder.Entity<ApplicationUser>().ToTable("dlk_users");
             builder.Entity<IdentityRole>().ToTable("dlk_roles");
             builder.Entity<IdentityUserRole<string>>().ToTable("dlk_user_roles");

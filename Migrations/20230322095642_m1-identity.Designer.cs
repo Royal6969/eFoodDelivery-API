@@ -12,8 +12,8 @@ using eFoodDelivery_API.DbContexts;
 namespace eFoodDelivery_API.Migrations
 {
     [DbContext(typeof(SqlServerContext))]
-    [Migration("20230320172508_migration-3-schemas")]
-    partial class migration3schemas
+    [Migration("20230322095642_m1-identity")]
+    partial class m1identity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

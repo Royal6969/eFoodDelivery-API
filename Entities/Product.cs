@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace eFoodDelivery_API.Models
+namespace eFoodDelivery_API.Entities
 {
     [Table("product", Schema = "dwh_efooddelivery_api")]
     public class Product
@@ -22,26 +22,26 @@ namespace eFoodDelivery_API.Models
         [Display(Name = "Id")]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        
+
         [Required]
         [Column("Name")]
         [Display(Name = "Name")]
-        [StringLength(25, ErrorMessage = "El nombre del producto no puede exceder los 25 caracteres")]
+        [StringLength(30, ErrorMessage = "El nombre del producto no puede exceder los 30 caracteres")]
         public string Name { get; set; }
 
         [Column("Description")]
         [Display(Name = "Description")]
-        [StringLength(60, ErrorMessage = "La descripción del producto no puede exceder los 60 caracteres")]
+        [StringLength(250, ErrorMessage = "La descripción del producto no puede exceder los 250 caracteres")]
         public string Description { get; set; }
 
         [Column("Tag")]
         [Display(Name = "Tag")]
-        [StringLength(15, ErrorMessage = "La etiqueta del producto no puede exceder los 15 caracteres")]
+        [StringLength(20, ErrorMessage = "La etiqueta del producto no puede exceder los 20 caracteres")]
         public string Tag { get; set; }
 
         [Column("Category")]
         [Display(Name = "Category")]
-        [StringLength(10, ErrorMessage = "La categoría del producto no puede exceder los 10 caracteres")]
+        [StringLength(20, ErrorMessage = "La categoría del producto no puede exceder los 20 caracteres")]
         public string Category { get; set; }
 
         [Column("Price")]

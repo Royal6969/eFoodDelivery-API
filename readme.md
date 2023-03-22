@@ -62,7 +62,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkSto
 Abrimos la consola de paquetes NuGets para ejecutar los siguientes comandos:
 
 ```bash
-Add-Migration identity-migration-1 -Context SqlServerContext
+Add-Migration m1-identity -Context SqlServerContext
 ```
 
 Este comando nos genera dos archivos, y en el principal de ellos, EntityFramework nos ha creado un script sql para la creación de las tablas de Identity, las cuales engloban todo lo relacionado con la gestión de los usuarios de nuestra web, facilitándonos sobretodo el login, register y roles.
@@ -153,7 +153,19 @@ public class ApplicationUser : IdentityUser
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<SqlServerContext>();
 ```
 
-### 1.3.3. DbContexts --> SqlServerContext.cs
+### 1.3.3. DbContexts --> UserEntityConfiguration.cs
+
+```csharp
+public class UserEntityConfiguration : IEntityTypeConfiguration<ApplicationUser>
+{
+    public void Configure(EntityTypeBuilder<ApplicationUser> builder)
+    {
+        builder.Property(user => user.Name).HasMaxLength(20);
+    }
+}
+```
+
+### 1.3.4. DbContexts --> SqlServerContext.cs
 
 Especificamos a EntityFramework la nueva clase del usuario
 
@@ -165,22 +177,48 @@ public class SqlServerContext : IdentityDbContext<ApplicationUser>
     }
 
     public DbSet<ApplicationUser> ApplicationUsersDbSet { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        builder.ApplyConfiguration(new UserEntityConfiguration());
+        builder.HasDefaultSchema("dlk_efooddelivery_api");
+    }
 }
 ```
 
-### 1.3.4. Nueva migración
+### 1.3.5. Nueva migración
 
 Creamos una nueva migración y la pusheamos a nuestra BBDD local, y efectivamente comprobamos que ya tenemos el nuevo campos del *name* del usuario.
 
 ![](./img/6.png)
 
-### 1.3.5. Cambiar los nombres por defecto de las tablas de Identity
+### 1.3.6. Cambiar los nombres por defecto de las tablas de Identity
 
 [Cambiar los nombres por defecto de las tablas de Identity](#cambiar-los-nombres-por-defecto-de-las-tablas-de-identity)
 
+```csharp
+public class SqlServerContext : IdentityDbContext<ApplicationUser>
+{
+    ...
+    // overrriding the OnModelCreating() method for customize our entities (tables)
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        ...
+        builder.Entity<ApplicationUser>().ToTable("dlk_users");
+        builder.Entity<IdentityRole>().ToTable("dlk_roles");
+        builder.Entity<IdentityUserRole<string>>().ToTable("dlk_user_roles");
+        builder.Entity<IdentityRoleClaim<string>>().ToTable("dlk_role_claim");
+        builder.Entity<IdentityUserClaim<string>>().ToTable("dlk_user_claim");
+        builder.Entity<IdentityUserLogin<string>>().ToTable("dlk_user_login");
+        builder.Entity<IdentityUserToken<string>>().ToTable("dlk_user_tokens");
+    }
+}
+```
+
 ## 1.4. Product entity
 
-### 1.4.1. Models --> Product.cs
+### 1.4.1. Entities --> Product.cs
 
 Vamos a crear nuestra primera entidad, la del Producto.
 
@@ -204,26 +242,26 @@ public class Product
     [Display(Name = "Id")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-        
+
     [Required]
     [Column("Name")]
     [Display(Name = "Name")]
-    [StringLength(25, ErrorMessage = "El nombre del producto no puede exceder los 25 caracteres")]
+    [StringLength(30, ErrorMessage = "El nombre del producto no puede exceder los 30 caracteres")]
     public string Name { get; set; }
 
     [Column("Description")]
     [Display(Name = "Description")]
-    [StringLength(60, ErrorMessage = "La descripción del producto no puede exceder los 60 caracteres")]
+    [StringLength(250, ErrorMessage = "La descripción del producto no puede exceder los 250 caracteres")]
     public string Description { get; set; }
 
     [Column("Tag")]
     [Display(Name = "Tag")]
-    [StringLength(15, ErrorMessage = "La etiqueta del producto no puede exceder los 15 caracteres")]
+    [StringLength(20, ErrorMessage = "La etiqueta del producto no puede exceder los 20 caracteres")]
     public string Tag { get; set; }
 
     [Column("Category")]
     [Display(Name = "Category")]
-    [StringLength(10, ErrorMessage = "La categoría del producto no puede exceder los 10 caracteres")]
+    [StringLength(20, ErrorMessage = "La categoría del producto no puede exceder los 20 caracteres")]
     public string Category { get; set; }
 
     [Column("Price")]
@@ -243,15 +281,17 @@ public class Product
 Añadimos el DbSet de la entiddad *Product*
 
 ```csharp
+...
 // navigation properties for entities (also it creates the tables)
 public DbSet<ApplicationUser> ApplicationUsersDbSet { get; set; }
 public DbSet<Product> ProductsDbSet { get; set; }
+...
 ```
 
 ### 1.4.3. Creamos una nueva migración y pusheamos a la BBDD
 
 ```bash
-Add-Migration migration-sqlserver-4-product -Context SqlServerContext
+Add-Migration m2-product -Context SqlServerContext
 ```
 
 ```bash
@@ -259,6 +299,8 @@ Update-Database -Context SqlSeerverContext
 ```
 
 ![](./img/9.png)
+
+
 
 # Webgrafía y Enlaces de Interés
 
