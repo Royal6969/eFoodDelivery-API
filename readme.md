@@ -22,6 +22,10 @@
 
 ## 1.1. Conexión con SqlServer
 
+### 1.1.0. Diagrama Relacional Inicial de la BBDD
+
+![](./img/0.png)
+
 ### 1.1.1. Configurar la conexión con la BBDD
 
 Para ello vamos al *appsettings.json* y añadimos nuestro *ConnectionStrings*
@@ -564,6 +568,111 @@ public class BlobService : IBlobService
     }
 }
 ```
+
+## 2.4. CreateProduct([FromForm] ProductCreateDTO productCreateDTO)
+
+### 2.4.1. DTOs --> ProductCreateDTO.cs
+
+```csharp
+public class ProductCreateDTO
+{
+    [Required]
+    [StringLength(30, ErrorMessage = "El nombre del producto no puede exceder los 30 caracteres")]
+    public string Name { get; set; }
+
+    [StringLength(250, ErrorMessage = "La descripción del producto no puede exceder los 250 caracteres")]
+    public string Description { get; set; }
+
+    [StringLength(20, ErrorMessage = "La etiqueta del producto no puede exceder los 20 caracteres")]
+    public string Tag { get; set; }
+
+    [StringLength(20, ErrorMessage = "La categoría del producto no puede exceder los 20 caracteres")]
+    public string Category { get; set; }
+
+    [Range(1, 99, ErrorMessage = "El precio del producto no puede ser mayor a 99,00€")]
+    public double Price { get; set; }
+
+    public IFormFile Image { get; set; }
+}
+```
+
+### 2.4.2. Tools --> Constants.cs
+
+Como necesito declarar en alguna parte el nombre de mi contenedor de imágenes en Azure, voy a crear esta clase la cual me seguirá sirviendo para el restod e constantes que vaya necesitando declarar.
+
+```csharp
+public static class Constants
+{
+    public const string SD_STORAGE_CONTAINER = "efooddelivery-images";
+}
+```
+
+### 2.4.3. ProductController.cs --> CreateProduct()
+
+```csharp
+[HttpPost]
+public async Task<ActionResult<ApiResponse>> CreateProduct([FromForm] ProductCreateDTO productCreateDTO) // I'm not using [FromBody] and I'm using [FromForm] bacause we also need to upload an image when we creating a product
+{
+    try
+    {
+        if (ModelState.IsValid) // like we have some required fields, it will validate if all the endpoints are valid
+        {
+            if (productCreateDTO.Image == null || productCreateDTO.Image.Length == 0)
+                return BadRequest();
+
+                // get the imageName = name + .extension
+                string imageName = $"{Guid.NewGuid()}{Path.GetExtension(productCreateDTO.Image.FileName)}";
+
+                // create the new Product object through its dto
+                Product productToCreate = new Product();
+                productToCreate.Name = productCreateDTO.Name;
+                productToCreate.Description = productCreateDTO.Description;
+                productToCreate.Tag = productCreateDTO.Tag;
+                productToCreate.Category = productCreateDTO.Category;
+                productToCreate.Price = productCreateDTO.Price;
+                productToCreate.Image = await _blobService.UploadBlob(imageName, Constants.SD_STORAGE_CONTAINER, productCreateDTO.Image); // upload the blob and it will return back the URL which we will save in the image
+                    
+                // save the object in DB
+                _dbContext.ProductsDbSet.Add(productToCreate);
+                _dbContext.SaveChanges();
+                _apiResponse.Result = productToCreate;
+                _apiResponse.StatusCode = HttpStatusCode.Created;
+                    
+                // return go to GetProduct() method to view the new product created
+                return CreatedAtRoute("GetProduct", new { id = productToCreate.Id }, _apiResponse);
+        }
+        else
+            _apiResponse.Success = false;
+
+    } catch (Exception ex)
+    {
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+    }
+
+    return _apiResponse;
+}
+```
+
+### 2.4.5. Modificando la etiqueta de la cabecera del método GetProduct()
+
+```csharp
+[HttpGet("{id:int}", Name = "GetProduct")] // like this method has a parameter, I need to specify what parameter is (name:type) // also specify a Name for the action method in CreateProduct()
+public async Task<IActionResult> GetProduct(int id) 
+{
+    ...
+}
+```
+
+### 2.4.6. Prueba de ejecución
+
+![](./img/18.png)
+
+![](./img/19.png)
+
+![](./img/20.png)
+
+![](./img/21.png)
 
 # Webgrafía y Enlaces de Interés
 
