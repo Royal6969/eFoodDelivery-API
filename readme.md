@@ -405,7 +405,7 @@ Ejecutamos el proyecto, y en Swagger, le damos al GET del endpoint de nuestro pr
 
 ## 2.2. GetProduct(int id)
 
-### 2.2.1. Controllers --> ProductController.cs
+### 2.2.1. ProductController.cs --> GetProduct(int id)
 
 ```csharp
 [HttpGet("{id:int}")] // like this method has a parameter, I need to specify what parameter is (name:type)
@@ -414,6 +414,7 @@ public async Task<IActionResult> GetProduct(int id)
     if (id == 0) // check for BadRequest
     {
         _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+        _apiResponse.Success = false;
         return BadRequest(_apiResponse);
     }
             
@@ -422,6 +423,7 @@ public async Task<IActionResult> GetProduct(int id)
     if(product == null) // check for NotFound
     {
         _apiResponse.StatusCode = HttpStatusCode.NotFound;
+        _apiResponse.Success = false;
         return NotFound(_apiResponse);
     }
 
@@ -612,28 +614,33 @@ public async Task<ActionResult<ApiResponse>> CreateProduct([FromForm] ProductCre
         if (ModelState.IsValid) // like we have some required fields, it will validate if all the endpoints are valid
         {
             if (productCreateDTO.Image == null || productCreateDTO.Image.Length == 0)
+            {
+                _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                _apiResponse.Success = false;
                 return BadRequest();
+            }
+                
 
-                // get the imageName = name + .extension
-                string imageName = $"{Guid.NewGuid()}{Path.GetExtension(productCreateDTO.Image.FileName)}";
+            // get the imageName = name + .extension
+            string imageName = $"{Guid.NewGuid()}{Path.GetExtension(productCreateDTO.Image.FileName)}";
 
-                // create the new Product object through its dto
-                Product productToCreate = new Product();
-                productToCreate.Name = productCreateDTO.Name;
-                productToCreate.Description = productCreateDTO.Description;
-                productToCreate.Tag = productCreateDTO.Tag;
-                productToCreate.Category = productCreateDTO.Category;
-                productToCreate.Price = productCreateDTO.Price;
-                productToCreate.Image = await _blobService.UploadBlob(imageName, Constants.SD_STORAGE_CONTAINER, productCreateDTO.Image); // upload the blob and it will return back the URL which we will save in the image
+            // create the new Product object through its dto
+            Product productToCreate = new Product();
+            productToCreate.Name = productCreateDTO.Name;
+            productToCreate.Description = productCreateDTO.Description;
+            productToCreate.Tag = productCreateDTO.Tag;
+            productToCreate.Category = productCreateDTO.Category;
+            productToCreate.Price = productCreateDTO.Price;
+            productToCreate.Image = await _blobService.UploadBlob(imageName, Constants.SD_STORAGE_CONTAINER, productCreateDTO.Image); // upload the blob and it will return back the URL which we will save in the image
                     
-                // save the object in DB
-                _dbContext.ProductsDbSet.Add(productToCreate);
-                _dbContext.SaveChanges();
-                _apiResponse.Result = productToCreate;
-                _apiResponse.StatusCode = HttpStatusCode.Created;
+            // save the object in DB
+            _dbContext.ProductsDbSet.Add(productToCreate);
+            _dbContext.SaveChanges();
+            _apiResponse.Result = productToCreate;
+            _apiResponse.StatusCode = HttpStatusCode.Created;
                     
-                // return go to GetProduct() method to view the new product created
-                return CreatedAtRoute("GetProduct", new { id = productToCreate.Id }, _apiResponse);
+            // return go to GetProduct() method to view the new product created
+            return CreatedAtRoute("GetProduct", new { id = productToCreate.Id }, _apiResponse);
         }
         else
             _apiResponse.Success = false;
@@ -707,7 +714,12 @@ public async Task<ActionResult<ApiResponse>> UpdateProduct(int id, [FromForm] Pr
             // Product productFetchedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
             Product productFetchedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
 
-            if (productFetchedFromDb == null) return BadRequest();
+            if (productFetchedFromDb == null) 
+            {
+                _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                _apiResponse.Success = false;
+                return BadRequest();
+            }
 
             productFetchedFromDb.Name = productUpdateDTO.Name;
             productFetchedFromDb.Description = productUpdateDTO.Description;
@@ -762,13 +774,23 @@ public async Task<ActionResult<ApiResponse>> DeleteProduct(int id)
 {
     try
     {
-        if (id == 0) return BadRequest();
+        if (id == 0) 
+        {
+            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+            _apiResponse.Success = false;
+            return BadRequest();
+        }
 
         // Product productFetchedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
         Product productFetchedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
 
-        if (productFetchedFromDb == null) return BadRequest();
-
+        if (productFetchedFromDb == null) 
+        {
+            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+            _apiResponse.Success = false;
+            return BadRequest();
+        }
+        
         // first, we need to delete the old image, and we have to get it with the URL after the second slash
         // https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/6622221b-7bf8-4204-9fb8-8e96d4e6490c.jpg
         await _blobService.DeleteBlob(productFetchedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);

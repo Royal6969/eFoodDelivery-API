@@ -45,6 +45,7 @@ namespace eFoodDelivery_API.Controllers
             if (id == 0) // check for BadRequest
             {
                 _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                _apiResponse.Success = false;
                 return BadRequest(_apiResponse);
             }
             
@@ -53,6 +54,7 @@ namespace eFoodDelivery_API.Controllers
             if(product == null) // check for NotFound
             {
                 _apiResponse.StatusCode = HttpStatusCode.NotFound;
+                _apiResponse.Success = false;
                 return NotFound(_apiResponse);
             }
 
@@ -69,7 +71,12 @@ namespace eFoodDelivery_API.Controllers
             {
                 if (ModelState.IsValid) // like we have some required fields, it will validate if all the endpoints are valid
                 {
-                    if (productCreateDTO.Image == null || productCreateDTO.Image.Length == 0) return BadRequest();
+                    if (productCreateDTO.Image == null || productCreateDTO.Image.Length == 0)
+                    {
+                        _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                        _apiResponse.Success = false;
+                        return BadRequest();
+                    }
 
                     // get the imageName = name + .extension
                     string imageName = $"{Guid.NewGuid()}{Path.GetExtension(productCreateDTO.Image.FileName)}";
@@ -111,12 +118,22 @@ namespace eFoodDelivery_API.Controllers
             {
                 if (ModelState.IsValid) // like we have some required fields, it will validate if all the endpoints are valid
                 {
-                    if (productUpdateDTO == null || id != productUpdateDTO.Id) return BadRequest();
-
+                    if (productUpdateDTO == null || id != productUpdateDTO.Id)
+                    {
+                        _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                        _apiResponse.Success = false;
+                        return BadRequest();
+                    }
+                    
                     // Product productFetchedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
                     Product productFetchedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
 
-                    if (productFetchedFromDb == null) return BadRequest();
+                    if (productFetchedFromDb == null) 
+                    {
+                        _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                        _apiResponse.Success = false;
+                        return BadRequest(); 
+                    }
 
                     productFetchedFromDb.Name = productUpdateDTO.Name;
                     productFetchedFromDb.Description = productUpdateDTO.Description;
@@ -162,12 +179,22 @@ namespace eFoodDelivery_API.Controllers
         {
             try
             {
-                if (id == 0) return BadRequest();
+                if (id == 0) 
+                {
+                    _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _apiResponse.Success = false;
+                    return BadRequest(); 
+                }
 
                 // Product productFetchedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
                 Product productFetchedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
 
-                if (productFetchedFromDb == null) return BadRequest();
+                if (productFetchedFromDb == null) 
+                {
+                    _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _apiResponse.Success = false;
+                    return BadRequest(); 
+                }
 
                 // first, we need to delete the old image, and we have to get it with the URL after the second slash
                 // https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/6622221b-7bf8-4204-9fb8-8e96d4e6490c.jpg
