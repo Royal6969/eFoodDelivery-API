@@ -368,7 +368,7 @@ public class ApiResponse
 }
 ```
 
-## 2.1.2. Controllers --> ProductController.cs
+## 2.1.2. ProductController.cs --> GetProducts()
 
 ```csharp
 // [Route("api/[controller]")] // instead a dynamic route, if I change the controller name, the route does not get updated
@@ -401,11 +401,7 @@ public class ProductController : ControllerBase
 
 Ejecutamos el proyecto, y en Swagger, le damos al GET del endpoint de nuestro producto, y confirmamos que obtenemos todos los productos de prueba que previamente insertamos en la BBDD.
 
-![](./img/11.png)
-
-![](./img/12.png)
-
-![](./img/13.png)
+[Prueba de ejecución del método GetProducts()](#productcontrollercs----getproducts)
 
 ## 2.2. GetProduct(int id)
 
@@ -437,9 +433,7 @@ public async Task<IActionResult> GetProduct(int id)
 
 ## 2.2.2. Prueba de ejecución
 
-![](./img/14.png)
-
-![](./img/15.png)
+[Prueba de ejecución del método GetProduct(int id)](#productcontrollercs----getproductint-id)
 
 ## 2.3. Gestión de imágenes
 
@@ -666,6 +660,122 @@ public async Task<IActionResult> GetProduct(int id)
 
 ### 2.4.6. Prueba de ejecución
 
+[Prueba de ejecución del método CreateProduct([FromForm] ProductCreateDTO productCreateDTO)](#productcontrollercs----createproductfromform-productcreatedto-productcreatedto)
+
+## 2.5. UpdateProduct(int id, [FromForm] ProductUpdateDTO productUpdateDTO)
+
+### 2.5.1. DTOs --> ProductUpdateDTO.cs
+
+```csharp
+public class ProductUpdateDTO
+{
+    [Key]
+    public int Id { get; set; }
+
+    [Required]
+    [StringLength(30, ErrorMessage = "El nombre del producto no puede exceder los 30 caracteres")]
+    public string Name { get; set; }
+
+    [StringLength(250, ErrorMessage = "La descripción del producto no puede exceder los 250 caracteres")]
+    public string Description { get; set; }
+
+    [StringLength(20, ErrorMessage = "La etiqueta del producto no puede exceder los 20 caracteres")]
+    public string Tag { get; set; }
+
+    [StringLength(20, ErrorMessage = "La categoría del producto no puede exceder los 20 caracteres")]
+    public string Category { get; set; }
+
+    [Range(1, 99, ErrorMessage = "El precio del producto no puede ser mayor a 99,00€")]
+    public double Price { get; set; }
+
+    public IFormFile Image { get; set; }
+}
+```
+
+### 2.5.2. ProductController.cs --> UpdateProduct()
+
+```csharp
+[HttpPut("{id:int}", Name = "UpdateProduct")]
+public async Task<ActionResult<ApiResponse>> UpdateProduct(int id, [FromForm] ProductUpdateDTO productUpdateDTO) // I'm not using [FromBody] and I'm using [FromForm] bacause we also need to upload an image when we creating a product
+{
+    try
+    {
+        if (ModelState.IsValid) // like we have some required fields, it will validate if all the endpoints are valid
+        {
+            if (productUpdateDTO == null || id != productUpdateDTO.Id) return BadRequest();
+
+            // Product productFetchedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
+            Product productFetchedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
+
+            if (productFetchedFromDb == null) return BadRequest();
+
+            productFetchedFromDb.Name = productUpdateDTO.Name;
+            productFetchedFromDb.Description = productUpdateDTO.Description;
+            productFetchedFromDb.Tag = productUpdateDTO.Tag;
+            productFetchedFromDb.Category = productUpdateDTO.Category;
+            productFetchedFromDb.Price = productUpdateDTO.Price;
+
+            if (productUpdateDTO.Image != null && productUpdateDTO.Image.Length > 0)
+            {
+                // get the imageName = name + .extension
+                string imageName = $"{Guid.NewGuid()}{Path.GetExtension(productUpdateDTO.Image.FileName)}";
+
+                // first, we need to delete the old image, and we have to get it with the URL after the second slash
+                // https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/6622221b-7bf8-4204-9fb8-8e96d4e6490c.jpg  
+                await _blobService.DeleteBlob(productFetchedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);
+                        
+                // second, upload the new product
+                productFetchedFromDb.Image = await _blobService.UploadBlob(imageName, Constants.SD_STORAGE_CONTAINER, productUpdateDTO.Image); // upload the blob and it will return back the URL which we will save in the image
+            }
+
+            // update the object in DB
+            _dbContext.ProductsDbSet.Update(productFetchedFromDb);
+            _dbContext.SaveChanges();
+            _apiResponse.StatusCode = HttpStatusCode.NoContent;
+
+            return Ok(_apiResponse);
+        }
+        else _apiResponse.Success = false;
+
+    }
+    catch (Exception ex)
+    {
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+    }
+
+    return _apiResponse;
+}
+```
+
+### 2.5.3. Prueba de Ejecución
+
+[Prueba de ejecución del método UpdateProduct(int id, [FromForm] ProductUpdateDTO productUpdateDTO)]()
+
+# Webgrafía y Enlaces de Interés
+
+## [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
+
+## [How can I change the table names when using ASP.NET Identity?](https://stackoverflow.com/questions/19460386/how-can-i-change-the-table-names-when-using-asp-net-identity)
+
+# Pruebas de Ejecución
+
+## ProductController.cs --> GetProducts()
+
+![](./img/11.png)
+
+![](./img/12.png)
+
+![](./img/13.png)
+
+## ProductController.cs --> GetProduct(int id)
+
+![](./img/14.png)
+
+![](./img/15.png)
+
+## ProductController.cs --> CreateProduct([FromForm] ProductCreateDTO productCreateDTO)
+
 ![](./img/18.png)
 
 ![](./img/19.png)
@@ -674,11 +784,21 @@ public async Task<IActionResult> GetProduct(int id)
 
 ![](./img/21.png)
 
-# Webgrafía y Enlaces de Interés
+## ProductController.cs --> UpdateProduct(int id, [FromForm] ProductUpdateDTO productUpdateDTO)
 
-## [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
+![](./img/22.png)
 
-## [How can I change the table names when using ASP.NET Identity?](https://stackoverflow.com/questions/19460386/how-can-i-change-the-table-names-when-using-asp-net-identity)
+![](./img/23.png)
+
+![](./img/24.png)
+
+![](./img/25.png)
+
+![](./img/26.png)
+
+![](./img/27.png)
+
+![](./img/28.png)
 
 # Extras
 

@@ -4,6 +4,9 @@ namespace eFoodDelivery_API.DTOs
 {
     public class ProductUpdateDTO
     {
+        [Key]
+        public int Id { get; set; }
+
         [Required]
         [StringLength(30, ErrorMessage = "El nombre del producto no puede exceder los 30 caracteres")]
         public string Name { get; set; }
