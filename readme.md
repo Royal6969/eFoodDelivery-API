@@ -695,7 +695,7 @@ public class ProductUpdateDTO
 ### 2.5.2. ProductController.cs --> UpdateProduct()
 
 ```csharp
-[HttpPut("{id:int}", Name = "UpdateProduct")]
+[HttpPut("{id:int}")]
 public async Task<ActionResult<ApiResponse>> UpdateProduct(int id, [FromForm] ProductUpdateDTO productUpdateDTO) // I'm not using [FromBody] and I'm using [FromForm] bacause we also need to upload an image when we creating a product
 {
     try
@@ -750,7 +750,50 @@ public async Task<ActionResult<ApiResponse>> UpdateProduct(int id, [FromForm] Pr
 
 ### 2.5.3. Prueba de Ejecución
 
-[Prueba de ejecución del método UpdateProduct(int id, [FromForm] ProductUpdateDTO productUpdateDTO)]()
+[Prueba de ejecución del método UpdateProduct(int id, [FromForm] ProductUpdateDTO productUpdateDTO)](#productcontrollercs----updateproductint-id-fromform-productupdatedto-productupdatedto)
+
+## 2.6. DeleteProduct(int id)
+
+### 2.6.1. ProductController.cs --> DeleteProduct()
+
+```csharp
+[HttpDelete("{id:int}")]
+public async Task<ActionResult<ApiResponse>> DeleteProduct(int id)
+{
+    try
+    {
+        if (id == 0) return BadRequest();
+
+        // Product productFetchedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
+        Product productFetchedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
+
+        if (productFetchedFromDb == null) return BadRequest();
+
+        // first, we need to delete the old image, and we have to get it with the URL after the second slash
+        // https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/6622221b-7bf8-4204-9fb8-8e96d4e6490c.jpg
+        await _blobService.DeleteBlob(productFetchedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);
+                
+        // remove the object in DB
+        _dbContext.ProductsDbSet.Remove(productFetchedFromDb);
+        _dbContext.SaveChanges();
+        _apiResponse.StatusCode = HttpStatusCode.NoContent;
+
+        return Ok(_apiResponse);
+
+    }
+    catch (Exception ex)
+    {
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+    }
+
+    return _apiResponse;
+}
+```
+
+### 2.6.2. Prueba de Ejecución
+
+[Prueba de ejecución del método DeleteProduct(int id)](#productcontrollercs----deleteproductint-id)
 
 # Webgrafía y Enlaces de Interés
 
@@ -799,6 +842,16 @@ public async Task<ActionResult<ApiResponse>> UpdateProduct(int id, [FromForm] Pr
 ![](./img/27.png)
 
 ![](./img/28.png)
+
+## ProductController.cs --> DeleteProduct(int id)
+
+![](./img/29.png)
+
+![](./img/30.png)
+
+![](./img/31.png)
+
+![](./img/32.png)
 
 # Extras
 

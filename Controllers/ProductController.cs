@@ -104,7 +104,7 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
-        [HttpPut("{id:int}", Name = "UpdateProduct")]
+        [HttpPut("{id:int}")]
         public async Task<ActionResult<ApiResponse>> UpdateProduct(int id, [FromForm] ProductUpdateDTO productUpdateDTO) // I'm not using [FromBody] and I'm using [FromForm] bacause we also need to upload an image when we creating a product
         {
             try
@@ -145,6 +145,40 @@ namespace eFoodDelivery_API.Controllers
                     return Ok(_apiResponse);
                 }
                 else _apiResponse.Success = false;
+
+            }
+            catch (Exception ex)
+            {
+                _apiResponse.Success = false;
+                _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+            }
+
+            return _apiResponse;
+        }
+
+
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult<ApiResponse>> DeleteProduct(int id)
+        {
+            try
+            {
+                if (id == 0) return BadRequest();
+
+                // Product productFetchedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
+                Product productFetchedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
+
+                if (productFetchedFromDb == null) return BadRequest();
+
+                // first, we need to delete the old image, and we have to get it with the URL after the second slash
+                // https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/6622221b-7bf8-4204-9fb8-8e96d4e6490c.jpg
+                await _blobService.DeleteBlob(productFetchedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);
+                
+                // remove the object in DB
+                _dbContext.ProductsDbSet.Remove(productFetchedFromDb);
+                _dbContext.SaveChanges();
+                _apiResponse.StatusCode = HttpStatusCode.NoContent;
+
+                return Ok(_apiResponse);
 
             }
             catch (Exception ex)
