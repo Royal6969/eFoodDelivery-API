@@ -817,6 +817,67 @@ public async Task<ActionResult<ApiResponse>> DeleteProduct(int id)
 
 [Prueba de ejecución del método DeleteProduct(int id)](#productcontrollercs----deleteproductint-id)
 
+# 3. Autentificación y Autorización
+
+## 3.1. Login y Register DTOs
+
+Vamos a comenzar por la creación de los DTOs para el Login. 
+Crearemos un DTO para la petición del Login, y otro para la respuesta de éste.
+
+### 3.1.1. DTOs --> LoginRequestDTO.cs
+
+```csharp
+public class LoginRequestDTO
+{
+    public string UserName { get; set; }
+    public string Password { get; set; }
+}
+```
+
+### 3.1.2. DTOs --> LoginResponseDTO.cs
+
+```csharp
+public class LoginResponseDTO
+{
+    public string Email { get; set; }
+    public string Token { get; set; } // in this string Token we can add whatever details we want, like email, userID, userRole and more
+}
+```
+
+### 3.1.3. DTOs --> RegisterRequestDTO.cs
+
+```csharp
+public class RegisterRequestDTO
+{
+    public string UserName { get; set; }
+    public string Name { get; set; }
+    public string Password { get; set; }
+    public string Role { get; set; } 
+    // if we want to create a user with admin role, we will expect that as a string when a user is registering
+    // but I know role should not be in the registration in the production API
+    // then, I will find out some other way to register the admin user like by seeding the database
+}
+```
+
+En el caso del Register, no necesitamos otro modelo para la respuesta, porque si el resgitro tiene éxito, enviaremos un OK, y si falla, enviaremos un mensaje de error.
+
+Tampoco tenemos que crear más tablas ahora porque ya tenemos todas las necesarias con la primera migracón que hice del Identity, el cual generó las tablas de usuarios, roles e intermedia entre éstos
+
+### 3.1.4. Tools --> Constants.cs
+
+También voy a dejar preparadas dos constantes que simbolicen los dos principales roles con lo que voy a trabajar.
+
+```csharp
+public static class Constants
+{
+    ...        
+    public const string ROLE_ADMIN = "admin";
+    public const string ROlE_CUSTOMER = "customer";
+}
+```
+
+
+
 # Webgrafía y Enlaces de Interés
 
 ## [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
