@@ -876,7 +876,128 @@ public static class Constants
 }
 ```
 
+## 3.2. Controllers --> AuthenticationController.cs
 
+### 3.2.1. Injección inicial de dependecias
+
+```csharp
+// [Route("api/[controller]")]
+[Route("api/Authentication")]
+[ApiController]
+public class AuthenticationController : ControllerBase
+{
+    // dependencies to inject 
+    private readonly ApplicationDbContext _dbContext;
+    private ApiResponse _apiResponse;
+    private string _JWTsecretKey;
+    private readonly UserManager<ApplicationUser> _userManager; // Identity helper method
+    private readonly RoleManager<IdentityRole> _roleManager;    // Identity helper methods
+
+    public AuthenticationController(ApplicationDbContext dbContext, IConfiguration configuration, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager) // using this configuration, we can access to appsettings.json
+    {
+        _dbContext = dbContext;
+        _apiResponse = new ApiResponse();
+        _JWTsecretKey = configuration.GetValue<string>("ApiSecrets:JWTsecret"); //  and we can populate the JWTsecretKey by this way
+        _userManager = userManager;
+        _roleManager = roleManager;
+    }
+}
+```
+
+### 3.2.2. appsettings.json --> JWTsecret
+
+```json
+"ApiSecrets": {
+  "JWTsecret": "myJWTsecret" // aún no voy a implementar esto pero sí lo dejo preparado
+}
+```
+
+### 3.2.3. AuthenticationController.cs --> Register([FromBody] RegisterRequestDTO registerRequestDTO)
+
+```csharp
+[HttpPost("Register")]
+public async Task<IActionResult> Register([FromBody] RegisterRequestDTO registerRequestDTO)
+{
+    // check if the new user alredy exists
+    ApplicationUser userFetchedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == registerRequestDTO.UserName.ToLower());
+
+    // if the user alredy exists --> Error message and BadRequest
+    if (userFetchedFromDb != null)
+    {
+        _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList.Add("UserName alredy exists");
+
+        return BadRequest(_apiResponse);
+    }
+
+    // if the user not exists yet --> create the new user
+    ApplicationUser newUser = new ApplicationUser();
+    newUser.UserName = registerRequestDTO.UserName;
+    newUser.Email = registerRequestDTO.UserName; // by the moment, we will keep the email as the UserName
+    newUser.NormalizedEmail = registerRequestDTO.UserName.ToUpper();
+    newUser.Name = registerRequestDTO.Name;
+
+    try
+    {
+        // to insert the new user in db we use _userManager
+        var result = await _userManager.CreateAsync(newUser, registerRequestDTO.Password);
+
+        // now it's time to assign a role to the new user
+        if (result.Succeeded)
+        {
+            // if the role we want to create doesn't exists yet
+            if (!_roleManager.RoleExistsAsync(Constants.ROLE_ADMIN).GetAwaiter().GetResult()) // like we can't use await in conditions, we have to use the method GetAwaiter()
+            {
+                // create roles in db
+                await _roleManager.CreateAsync(new IdentityRole(Constants.ROLE_ADMIN));
+                await _roleManager.CreateAsync(new IdentityRole(Constants.ROlE_CUSTOMER));
+            }
+
+            // once roles are created in db we need to assign a role to this particular new user
+            if (registerRequestDTO.Role.ToLower() == Constants.ROLE_ADMIN)
+                await _userManager.AddToRoleAsync(newUser, Constants.ROLE_ADMIN);
+            else
+                await _userManager.AddToRoleAsync(newUser, Constants.ROlE_CUSTOMER);
+
+            _apiResponse.StatusCode = HttpStatusCode.OK;
+            _apiResponse.Success = true;
+
+            return Ok(_apiResponse);
+        }
+    }
+    catch (Exception ex)
+    {
+
+    }
+
+    _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+    _apiResponse.Success = false;
+    _apiResponse.ErrorsList.Add("Error occurred during registration");
+
+    return BadRequest(_apiResponse);
+}
+```
+
+### 3.2.4. Desactivar en el Program.cs durante el desarrollo del proyecto las comprobaciones de Identity en el registro
+
+```csharp
+...
+// to turn off the default configuration for Identity in Register // only for development
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 1;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+});
+...
+```
+
+### 3.2.5. Prueba de Ejecución
+
+[Prueba de ejecución del método Register([FromBody] RegisterRequestDTO registerRequestDTO)](#authenticationcontrollercs----registerfrombody-registerrequestdto-registerrequestdto)
 
 # Webgrafía y Enlaces de Interés
 
@@ -889,52 +1010,49 @@ public static class Constants
 ## ProductController.cs --> GetProducts()
 
 ![](./img/11.png)
-
 ![](./img/12.png)
-
 ![](./img/13.png)
 
 ## ProductController.cs --> GetProduct(int id)
 
 ![](./img/14.png)
-
 ![](./img/15.png)
 
 ## ProductController.cs --> CreateProduct([FromForm] ProductCreateDTO productCreateDTO)
 
 ![](./img/18.png)
-
 ![](./img/19.png)
-
 ![](./img/20.png)
-
 ![](./img/21.png)
 
 ## ProductController.cs --> UpdateProduct(int id, [FromForm] ProductUpdateDTO productUpdateDTO)
 
 ![](./img/22.png)
-
 ![](./img/23.png)
-
 ![](./img/24.png)
-
 ![](./img/25.png)
-
 ![](./img/26.png)
-
 ![](./img/27.png)
-
 ![](./img/28.png)
 
 ## ProductController.cs --> DeleteProduct(int id)
 
 ![](./img/29.png)
-
 ![](./img/30.png)
-
 ![](./img/31.png)
-
 ![](./img/32.png)
+
+## AuthenticationController.cs --> Register([FromBody] RegisterRequestDTO registerRequestDTO)
+
+![](./img/33.png)
+![](./img/34.png)
+![](./img/35.png)
+![](./img/36.png)
+![](./img/37.png)
+![](./img/38.png)
+![](./img/39.png)
+![](./img/40.png)
+![](./img/41.png)
 
 # Extras
 
