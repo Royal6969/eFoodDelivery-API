@@ -876,7 +876,7 @@ public static class Constants
 }
 ```
 
-## 3.2. Controllers --> AuthenticationController.cs
+## 3.2. Controllers --> AuthenticationController.cs (Register)
 
 ### 3.2.1. Injección inicial de dependecias
 
@@ -999,6 +999,113 @@ builder.Services.Configure<IdentityOptions>(options =>
 
 [Prueba de ejecución del método Register([FromBody] RegisterRequestDTO registerRequestDTO)](#authenticationcontrollercs----registerfrombody-registerrequestdto-registerrequestdto)
 
+## 3.3. Login with JWT
+
+### 3.3.1. AuthenticationController.cs --> Login()
+
+```csharp
+// dependencies to inject 
+private readonly ApplicationDbContext _dbContext;private ApiResponse _apiResponse;
+private string _JWTsecretKey;
+private readonly UserManager<ApplicationUser> _userManager; // Identity helper method
+private readonly RoleManager<IdentityRole> _roleManager;    // Identity helper methods
+
+public AuthenticationController(ApplicationDbContext dbContext, IConfiguration configuration, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager) // using this configuration, we can access to appsettings.json
+{
+    _dbContext = dbContext;
+    _apiResponse = new ApiResponse();
+    _JWTsecretKey = configuration.GetValue<string>("ApiSecrets:JWTsecret"); //  and we can populate the JWTsecretKey by this way
+    _userManager = userManager;
+    _roleManager = roleManager;
+}
+
+[HttpPost("Login")]
+public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDTO)
+{
+    // when the user tries to login in base his username, we have to retrieve that user from db
+    ApplicationUser userFetchedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == loginRequestDTO.UserName.ToLower());
+
+    // we can use a Identity Helper Method to check the password
+    bool valid = await _userManager.CheckPasswordAsync(userFetchedFromDb, loginRequestDTO.Password);
+
+    // if password given by user doesn't match with password in db --> BadRequest
+    if (!valid)
+    {
+        _apiResponse.Result = new LoginResponseDTO();
+        _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList.Add("Username or Password is incorrect");
+
+        return BadRequest(_apiResponse);
+    }
+    
+    ////////////////////////////////////// Token Generation starts ///////////////////////////////////////
+    // if the password match correctly, we have to generate a JWT
+    JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+    // we have to convert in array our _JWTsecretKey
+    byte[] secretKey = Encoding.ASCII.GetBytes(_JWTsecretKey);
+    // we will need the user role so let's get it with an Identity helper method
+    var userRoles = await _userManager.GetRolesAsync(userFetchedFromDb);
+    // to define properties for the token
+    SecurityTokenDescriptor securityTokenDescriptor = new SecurityTokenDescriptor();
+    // each one of those properties are defined in a Claim inside a claim array (creating an object of ClaimsIdentity type)
+    securityTokenDescriptor.Subject = new ClaimsIdentity(new Claim[]
+        {
+            new Claim("fullName", userFetchedFromDb.Name),
+            new Claim("userId", userFetchedFromDb.Id.ToString()),
+            // there are some claims alredy defined inside ClaimTypes class
+            new Claim(ClaimTypes.Email, userFetchedFromDb.UserName.ToString()),
+            new Claim(ClaimTypes.Role, userRoles.FirstOrDefault()),
+        });
+    // how long the token is valid for ??
+    securityTokenDescriptor.Expires = DateTime.UtcNow.AddDays(7);
+    // we need to use our byte[]secretKey to validate or add a signature to our token
+    securityTokenDescriptor.SigningCredentials = new SigningCredentials
+        (
+            new SymmetricSecurityKey(secretKey), 
+            SecurityAlgorithms.HmacSha256Signature
+        );
+    // Final step --> generate token
+    SecurityToken securityToken = jwtSecurityTokenHandler.CreateToken(securityTokenDescriptor);
+    ////////////////////////////////////// Token Generation ends ///////////////////////////////////////
+
+    // populate email and token
+    LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
+    loginResponseDTO.Email = userFetchedFromDb.Email;
+    loginResponseDTO.Token = jwtSecurityTokenHandler.WriteToken(securityToken);
+
+    // if the email is null, return again a BadRequest
+    if (loginResponseDTO.Email == null || string.IsNullOrEmpty(loginResponseDTO.Token))
+    {
+        _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList.Add("Username or Password is incorrect");
+
+        return BadRequest(_apiResponse);
+    }
+
+    // if everything is valid like email and token are populated, then we will return back OK
+    _apiResponse.StatusCode = HttpStatusCode.OK;
+    _apiResponse.Success = true;
+    _apiResponse.Result = loginResponseDTO;
+
+    return Ok(_apiResponse);
+}
+```
+
+### 3.3.2. appsettings.json --> JWT string secret
+
+```json
+"ApiSecrets": {
+    "JWTsecret": "1983y180dhwqbxc1982y83y7reyt6frcuy2bdo1n3d7y28dg91eohxcs1hx3w89dh7undon283hd3deb" 
+    // base string to generate token with JWT // it could be whatever you want (I pressed keys randomly)
+}
+```
+
+### 3.3.3. Prueba de Ejecución
+
+[Prueba de ejecución del método Login([FromBody] LoginRequestDTO loginRequestDTO)](#authenticationcontrollercs----loginfrombody-loginrequestdto-loginrequestdto)
+
 # Webgrafía y Enlaces de Interés
 
 ## [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
@@ -1053,6 +1160,12 @@ builder.Services.Configure<IdentityOptions>(options =>
 ![](./img/39.png)
 ![](./img/40.png)
 ![](./img/41.png)
+
+## AuthenticationController.cs --> Login([FromBody] LoginRequestDTO loginRequestDTO)
+
+![](./img/42.png)
+![](./img/43.png)
+![](./img/44.png)
 
 # Extras
 

@@ -5,7 +5,11 @@ using eFoodDelivery_API.Tools;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Security.Claims;
+using System.Text;
 
 namespace eFoodDelivery_API.Controllers
 {
@@ -28,6 +32,80 @@ namespace eFoodDelivery_API.Controllers
             _JWTsecretKey = configuration.GetValue<string>("ApiSecrets:JWTsecret"); //  and we can populate the JWTsecretKey by this way
             _userManager = userManager;
             _roleManager = roleManager;
+        }
+
+
+        [HttpPost("Login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDTO)
+        {
+            // when the user tries to login in base his username, we have to retrieve that user from db
+            ApplicationUser userFetchedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == loginRequestDTO.UserName.ToLower());
+
+            // we can use a Identity Helper Method to check the password
+            bool valid = await _userManager.CheckPasswordAsync(userFetchedFromDb, loginRequestDTO.Password);
+
+            // if password given by user doesn't match with password in db --> BadRequest
+            if (!valid)
+            {
+                _apiResponse.Result = new LoginResponseDTO();
+                _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                _apiResponse.Success = false;
+                _apiResponse.ErrorsList.Add("Username or Password is incorrect");
+
+                return BadRequest(_apiResponse);
+            }
+
+            ////////////////////////////////////// Token Generation starts ///////////////////////////////////////
+            // if the password match correctly, we have to generate a JWT
+            JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+            // we have to convert in array our _JWTsecretKey
+            byte[] secretKey = Encoding.ASCII.GetBytes(_JWTsecretKey);
+            // we will need the user role so let's get it with an Identity helper method
+            var userRoles = await _userManager.GetRolesAsync(userFetchedFromDb);
+            // to define properties for the token
+            SecurityTokenDescriptor securityTokenDescriptor = new SecurityTokenDescriptor();
+            // each one of those properties are defined in a Claim inside a claim array (creating an object of ClaimsIdentity type)
+            securityTokenDescriptor.Subject = new ClaimsIdentity(new Claim[]
+            {
+                new Claim("fullName", userFetchedFromDb.Name),
+                new Claim("userId", userFetchedFromDb.Id.ToString()),
+                // there are some claims alredy defined inside ClaimTypes class
+                new Claim(ClaimTypes.Email, userFetchedFromDb.UserName.ToString()),
+                new Claim(ClaimTypes.Role, userRoles.FirstOrDefault()),
+            });
+            // how long the token is valid for ??
+            securityTokenDescriptor.Expires = DateTime.UtcNow.AddDays(7);
+            // we need to use our byte[]secretKey to validate or add a signature to our token
+            securityTokenDescriptor.SigningCredentials = new SigningCredentials
+                (
+                    new SymmetricSecurityKey(secretKey), 
+                    SecurityAlgorithms.HmacSha256Signature
+                );
+            // Final step --> generate token
+            SecurityToken securityToken = jwtSecurityTokenHandler.CreateToken(securityTokenDescriptor);
+            ////////////////////////////////////// Token Generation ends ///////////////////////////////////////
+
+            // populate email and token
+            LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
+            loginResponseDTO.Email = userFetchedFromDb.Email;
+            loginResponseDTO.Token = jwtSecurityTokenHandler.WriteToken(securityToken);
+
+            // if the email is null, return again a BadRequest
+            if (loginResponseDTO.Email == null || string.IsNullOrEmpty(loginResponseDTO.Token))
+            {
+                _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                _apiResponse.Success = false;
+                _apiResponse.ErrorsList.Add("Username or Password is incorrect");
+
+                return BadRequest(_apiResponse);
+            }
+
+            // if everything is valid like email and token are populated, then we will return back OK
+            _apiResponse.StatusCode = HttpStatusCode.OK;
+            _apiResponse.Success = true;
+            _apiResponse.Result = loginResponseDTO;
+
+            return Ok(_apiResponse);
         }
 
 
