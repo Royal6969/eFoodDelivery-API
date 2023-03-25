@@ -22,9 +22,11 @@
 
 ## 1.1. Conexión con SqlServer
 
+<!-- 
 ### 1.1.0. Diagrama Relacional Inicial de la BBDD
 
-![](./img/0.png)
+![](./img/0.png) 
+-->
 
 ### 1.1.1. Configurar la conexión con la BBDD
 
@@ -1106,11 +1108,139 @@ public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDT
 
 [Prueba de ejecución del método Login([FromBody] LoginRequestDTO loginRequestDTO)](#authenticationcontrollercs----loginfrombody-loginrequestdto-loginrequestdto)
 
+## 3.4. Usar el JWT para la Autentificación y la Autorización del usuario
+
+Para testear en Swagger esto, voy a hacer un controlador API aparte con dos métodos [HttpGet] muy simples para la autentificación y la autorización.
+
+### 3.4.1. AuthenticationTestController.cs --> GetAuthentication()
+
+```csharp
+[HttpGet]
+[Authorize] // if we want to get some endpoint to be accessed by only authenticated users, we have to add this tag
+public async Task<ActionResult<string>> GetAuthentication()
+{
+    // Authentication means that if my username and password is valid, I'm authenticated
+    return "You're authenticated successfully";
+}
+```
+
+### 3.4.2. AuthenticationTestController.cs --> GetAuthorization(int id)
+
+```csharp
+[HttpGet("{id:int}")]
+[Authorize(Roles = Constants.ROLE_ADMIN)] // if we want that some endpoint needs to be accessed only with an admin role, we have to specify the rol
+public async Task<ActionResult<string>> GetAuthorization(int id)
+{
+    // Authorization means the role we get when we login and what we're able to go and do
+    return "You're authorized with admin role";
+}
+```
+
+### 3.4.3. Configurar la Autentificación en el Program.cs
+
+Si bien es cierto que la Autorización ya viene habilitada por defecto, la autentificación no.
+Recordamos que la Autorización = Autentificación + accesos(roles).
+
+```csharp
+app.UseAuthentication(); // adding authentication we can get its endpoint in swagger
+app.UseAuthorization();  // it was here by default
+```
+
+Pero con esto, aún no sería suficiente, ya que si incurrimos en un error de autentificación, la respuesta por defecto nos devolverá un estado 404, el cual es NotFound y no se correspondería con lo que realmente estaría sucediendo.
+Para que nuestro proyecto entienda bien la autentificación del usuario, es necesario realizar unas configuraciones en el Program.cs
+
+En la parte de los servicios ...
+
+```csharp
+...
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+
+// to turn off the default configuration for Identity in Register // only for development
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 1;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+});
+
+// how to decode the JWT?? We'll use the key we are storing inside the appsettings.json
+var JWTsecretKey = builder.Configuration.GetValue<string>("ApiSecrets:JWTsecret"); // retrieve the key like we did in Login() method
+// once we have that key inside the JWT bearer, we have to write the token validation parameters
+TokenValidationParameters tokenValidationParameters = new TokenValidationParameters();
+tokenValidationParameters.ValidateIssuerSigningKey = true;
+tokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(JWTsecretKey));
+// now I'm working locally but when I deploy the project, I'll have a certain audience like only this URL can send the token
+tokenValidationParameters.ValidateIssuer = false;
+tokenValidationParameters.ValidateAudience = false;
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; // just a constant value of bearer
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; // we'll also have the same default challenge scheme on that
+    }
+).AddJwtBearer(options => // we have to add the JWT bearer as well and we have to configure on what we allow with JWT bearer
+    {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = tokenValidationParameters;
+    }
+);
+
+builder.Services.AddCors(); // if an API is being called from some other URL, it will work
+...
+```
+
+En la parte del pipeline
+
+```csharp
+...
+app.UseCors(options => // when we have to add cors, also inside the request pipeline, we have to use cors
+{
+    options
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowAnyOrigin()
+    ;
+});
+
+app.UseAuthentication(); // adding authentication we can get its endpoint in swagger
+app.UseAuthorization();  // it was here by default
+...
+```
+
+Una vez configurado todo esto, si ejecutamos la API y vamos a nuestro método de testeo del *GetAuthentication()*, podremos comprobar que ante un fallo de autentificación, en vez de obtener el error confuso del 404 NotFound, ahora obtendremos el error específico del 401 Unathorize
+
+![](./img/45.png)
+
 # Webgrafía y Enlaces de Interés
 
-## [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
+### 1. [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
 
-## [How can I change the table names when using ASP.NET Identity?](https://stackoverflow.com/questions/19460386/how-can-i-change-the-table-names-when-using-asp-net-identity)
+### 2. [How can I change the table names when using ASP.NET Identity?](https://stackoverflow.com/questions/19460386/how-can-i-change-the-table-names-when-using-asp-net-identity)
+
+### 3. [Wrapping ASP.NET Web API Responses for consistency and to provide additional information](https://www.devtrends.co.uk/blog/wrapping-asp.net-web-api-responses-for-consistency-and-to-provide-additional-information)
+
+### 4. [How to make your Web API responses consistent and useful](https://www.infoworld.com/article/3674115/how-to-make-your-web-api-responses-consistent-and-useful.html)
+
+### 5. [How to use Azure Blob Storage in an ASP.NET Core Web API to list, upload, download, and delete files](https://blog.christian-schou.dk/how-to-use-azure-blob-storage-with-asp-net-core/)
+
+### 6. [Almacenamiento de archivos mediante un API en .NET y Azure Blob Storage](https://www.youtube.com/watch?v=wrAGiywdOjE&ab_channel=CristopherCoronado)
+
+### 7. [Web API in .NET 6.0 Tutorial: How to Build CRUD Operation](https://www.bacancytechnology.com/blog/web-api-in-net-6)
+
+### 8. [.NET 7 Web API & Entity Framework 🚀 Full Course (CRUD, Repository Pattern, DI, SQL Server & more)](https://www.youtube.com/watch?v=8pH5Lv4d5-g&ab_channel=PatrickGod)
+
+### 9. [.NET 7 Web API 🔒 Create JSON Web Tokens (JWT) - User Registration / Login /](https://www.youtube.com/watch?v=UwruwHl3BlU&ab_channel=PatrickGod)
+
+### 10. [.NET 7 Web API 🔒 Role-Based Authorization with JSON Web Tokens (JWT) & the dotnet user-jwts CLI](https://www.youtube.com/watch?v=6sMPvucWNRE&ab_channel=PatrickGod)
+
+### 11. [Swagger Documentation --> Bearer Authentication](https://swagger.io/docs/specification/authentication/bearer-authentication/#:~:text=The%20bearer%20token%20is%20a,Authorization%3A%20Bearer)
+
+### 12. [How To Add JWT Authentication To An ASP.NET Core API](https://medium.com/geekculture/how-to-add-jwt-authentication-to-an-asp-net-core-api-84e469e9f019)
+
+### 13. [How to Implement JWT Authentication in Asp.Net Core Web API](https://labpys.com/how-to-implement-jwt-authentication-in-asp-net-core-web-api/)
 
 # Pruebas de Ejecución
 
