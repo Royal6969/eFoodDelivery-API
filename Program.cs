@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 /************************************************************************************************************/
@@ -73,7 +74,44 @@ builder.Services.AddSingleton<IBlobService, BlobService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+//////////////////////////////////////////// Swagger Security /////////////////////////////////////////////
+OpenApiSecurityScheme openApiSecurityScheme1 = new OpenApiSecurityScheme();
+openApiSecurityScheme1.Description = // add some text here where we will say that enter better space and then your token in the input field
+    "JWT Authorization header using the Bearer scheme. \r\n\r\n " +
+    "Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\n" +
+    "Example: \"Bearer 12345abcdef\"";
+openApiSecurityScheme1.Name = "Authorization";
+openApiSecurityScheme1.In = ParameterLocation.Header; // we have to define where we will add this and that will be inside 
+openApiSecurityScheme1.Scheme = JwtBearerDefaults.AuthenticationScheme; // constant "Bearer"
+
+OpenApiReference openApiReference = new OpenApiReference();
+openApiReference.Type = ReferenceType.SecurityScheme;
+openApiReference.Id = "Bearer";
+
+OpenApiSecurityScheme openApiSecurityScheme2 = new OpenApiSecurityScheme();
+openApiSecurityScheme2.Reference = openApiReference;
+openApiSecurityScheme2.Scheme = "oauth2";
+openApiSecurityScheme2.Name = "Bearer";
+openApiSecurityScheme2.In = ParameterLocation.Header;
+
+builder.Services.AddSwaggerGen(options => // here we can configure options on SwaggerGen and define that for the security definition we want to use bearer token.
+{
+    options.AddSecurityDefinition(
+        JwtBearerDefaults.AuthenticationScheme, // --> constant "Bearer"
+        openApiSecurityScheme1
+    );
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
+        {
+            openApiSecurityScheme2,
+            new List<string>()
+        }
+    });
+});
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 /************************************************************************************************************/
 /************************************************* App Pipeline Starts **************************************/

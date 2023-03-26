@@ -1214,6 +1214,71 @@ Una vez configurado todo esto, si ejecutamos la API y vamos a nuestro método de
 
 ![](./img/45.png)
 
+## 3.5. Añadiendo seguridad a Swagger
+
+Continuando con el test del endpoint de la autentificación, llegamos a obtener el error específico del 401.
+
+Pero para acceder al recurso en sí de la respuesta (autentificarnos exitósamente y que nos salga el mensaje), necesitamos pasar el JWT.
+
+Pero no podemos pasar el token a través de la documentación de Swagger, actualmente no tenemos ninguna forma de pasarlo.
+
+Vamos a añadir una serie de configuraciones al final de la sección de servicios del Program.cs para poder hacer esto.
+
+**Nota:** la idea básica es que, utilizando un token podamos acceder al endpoint adjunto al rol de tal token. (recuerda que el token del admin es diferente al token del customer, lo cual implica un rol diferente, y por tanto, un acceso y restricciones diferentes).
+
+```csharp
+OpenApiSecurityScheme openApiSecurityScheme1 = new OpenApiSecurityScheme();
+openApiSecurityScheme1.Description = // add some text here where we will say that enter better space and then your token in the input field
+    "JWT Authorization header using the Bearer scheme. \r\n\r\n " +
+    "Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\n" +
+    "Example: \"Bearer 12345abcdef\"";
+openApiSecurityScheme1.Name = "Authorization";
+openApiSecurityScheme1.In = ParameterLocation.Header; // we have to define where we will add this and that will be inside 
+openApiSecurityScheme1.Scheme = JwtBearerDefaults.AuthenticationScheme; // "Bearer"
+
+OpenApiReference openApiReference = new OpenApiReference();
+openApiReference.Type = ReferenceType.SecurityScheme;
+openApiReference.Id = "Bearer";
+
+OpenApiSecurityScheme openApiSecurityScheme2 = new OpenApiSecurityScheme();
+openApiSecurityScheme2.Reference = openApiReference;
+openApiSecurityScheme2.Scheme = "oauth2";
+openApiSecurityScheme2.Name = "Bearer";
+openApiSecurityScheme2.In = ParameterLocation.Header;
+
+builder.Services.AddSwaggerGen(options => // here we can configure options on SwaggerGen and define that for the security definition we want to use bearer token.
+{
+    options.AddSecurityDefinition(
+        JwtBearerDefaults.AuthenticationScheme, // --> "Bearer"
+        openApiSecurityScheme1
+    );
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
+        {
+            openApiSecurityScheme2,
+            new List<string>()
+        }
+    });
+});
+```
+
+Una vez hecho esto, si ejecutamos ahora el proyecto, veremos un icono de un candado en cada endpoint y un botón en la parte superior derecha que dice "Authorize".
+
+Voy a aclarar mejor toda esta funcionalidad de soporte extra de Swagger con un video a modo de prueba de ejecución.
+
+[Prueba de Ejecución 1 - Añadiendo soporte extra de seguridad a Swagger](https://user-images.githubusercontent.com/80839621/227771181-978f91a7-933b-4753-9be1-08b3fac3ba9e.mp4)
+
+En el video se puede apreciar que, tras pulsar el botón de "Authorize" nos sale encima del input el texto de descripción que configuramos previamente en el *openApiSecurityScheme1*, y en el input se espera que introduzcamos el *Bearer Token*.
+
+Primero pruebo a introducir una cosa cualquiera falsa, y efectivamente cuando ejecuto el endpoint de testeo de la autentificación, me salta el error 401.
+
+Pero si hago login como administrador, y cojo el token de éste, pongo en el input del botón Authorize, "Bearer [copia/pega del token]", y volvemos a ejecutar el endpoint de testeo de la autentificación, comprobamos que ya nos devuelve el estado de éxito y el mensaje de que nos hemos autentificado correctamente.
+
+**Nota:** recordando que en el endpoint de testeo de la autentificación que recibe un id, pusimos la etiqueta authorize solo para que accediera el admin... si hacemos la prueba de logearnos como un customer y copiamos su token y hacemos la prueba de tal endpoint, veremos que nos salta un error de 403 de prohibido... pero en cambio, si lo probamos con el token del admin, nos devolverá el estado de éxito con el mensaje de prueba.
+
+[Prueba de Ejecución 2 - Seguridad Swagger - Testeando el endpoint de la autentificación para el rol admin](https://user-images.githubusercontent.com/80839621/227773208-afdf57f5-bfaf-4fc6-a845-892d133a57b7.mp4)
+
 # Webgrafía y Enlaces de Interés
 
 ### 1. [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
