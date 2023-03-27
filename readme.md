@@ -1279,6 +1279,126 @@ Pero si hago login como administrador, y cojo el token de éste, pongo en el inp
 
 [Prueba de Ejecución 2 - Seguridad Swagger - Testeando el endpoint de la autentificación para el rol admin](https://user-images.githubusercontent.com/80839621/227773208-afdf57f5-bfaf-4fc6-a845-892d133a57b7.mp4)
 
+# 4. Cart y CartItem
+
+## 4.1. Entidad del carrito
+
+```csharp
+[Table("dwh_cart", Schema = "dwh_efooddelivery_api")]
+public class Cart
+{
+    [Column("Md_uuid")]
+    [Display(Name = "Md_uuid")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Md_uuid { get; set; } = Guid.NewGuid();
+
+    [Column("Md_date")]
+    [Display(Name = "Md_date")]
+    [DataType(DataType.DateTime)]
+    [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
+    public DateTime Md_date { get; set; } = DateTime.Now;
+
+    [Key]
+    [Column("Id")]
+    [Display(Name = "Id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
+
+    [Column("UserId")]
+    [Display(Name = "UserId")]
+    public string UserId { get; set; } // the UserId in dlk_users table
+
+    // for when someone tries to check out with the items in the cart, we will need three more attributes...
+    [NotMapped]
+    public double Total { get; set; }
+
+    [NotMapped] 
+    public string PaymentAttempId { get; set; } // stripe payment gateway will give us a SecretID that will be used to check out
+
+    [NotMapped]
+    public string ClientSecret { get; set; } // stripe client secret
+
+
+    /*************************************** Relational fields *************************************/
+    // OneToMany
+    public ICollection<CartItem> CartItemsList { get; set; }
+}
+```
+
+## 4.2. Entidad del Objeto del Carrito
+
+```csharp
+[Table("dwh_cartItem", Schema = "dwh_efooddelivery_api")]
+public class CartItem
+{
+    [Column("Md_uuid")]
+    [Display(Name = "Md_uuid")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Md_uuid { get; set; } = Guid.NewGuid();
+
+    [Column("Md_date")]
+    [Display(Name = "Md_date")]
+    [DataType(DataType.DateTime)]
+    [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
+    public DateTime Md_date { get; set; } = DateTime.Now;
+
+    [Key]
+    [Column("Id")]
+    [Display(Name = "Id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
+
+    [Column("ProductId")]
+    [Display(Name = "ProductId")]
+    public int ProductId { get; set; }
+
+    [Column("Quantity")]
+    [Display(Name = "Quantity")]
+    public int Quantity { get; set; }
+
+    [Column("CartId")]
+    [Display(Name = "CartId")]
+    public int CartId { get; set; }
+
+
+    /*************************************** Relational fields *************************************/
+
+    [ForeignKey("ProductId")]
+    public Product Product { get; set; } = new Product();
+}
+```
+
+## 4.3. DbContexts --> ApplicationDbContext.cs
+
+```csharp
+...
+public DbSet<Cart> CartDbSet { get; set; }
+public DbSet<CartItem> CartItemsDbSet { get; set; }
+...
+```
+
+## 4.4. Migrar a la BBDD las nuevas entidades
+
+```bash
+Add-Migration m4-cart-cartItem
+```
+
+```bash
+Update-Database
+```
+
+## 4.5. Autogenerar un diagrama relacional de la BBDD
+
+Tenemos que ir a la pestaña de *Extensiones* y darle a *Administrar Extensiones*, lo cual nos llevará al *Visual Studio Marketplace*.
+
+Una vez allí, buscaremos e instalaremos la extensión llamada "EF Core Power Tools". Reiniciamos VS2022 para que se instale correctamente la nueva extensión.
+
+Luego hacemos click derecho sobre el *csproj* y nos saldrá la opción de "EF Core Power Tools", y le daremos a "Add DbContext Diagram".
+
+![](./img/46.png)
+![](./img/47.png)
+![](./img/48.png)
+
 # Webgrafía y Enlaces de Interés
 
 ### 1. [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
@@ -1295,17 +1415,21 @@ Pero si hago login como administrador, y cojo el token de éste, pongo en el inp
 
 ### 7. [Web API in .NET 6.0 Tutorial: How to Build CRUD Operation](https://www.bacancytechnology.com/blog/web-api-in-net-6)
 
-### 8. [.NET 7 Web API & Entity Framework 🚀 Full Course (CRUD, Repository Pattern, DI, SQL Server & more)](https://www.youtube.com/watch?v=8pH5Lv4d5-g&ab_channel=PatrickGod)
+### 8. [.NET 7 Web API & Entity Framework - Full Course (CRUD, Repository Pattern, DI, SQL Server & more)](https://www.youtube.com/watch?v=8pH5Lv4d5-g&ab_channel=PatrickGod)
 
-### 9. [.NET 7 Web API 🔒 Create JSON Web Tokens (JWT) - User Registration / Login /](https://www.youtube.com/watch?v=UwruwHl3BlU&ab_channel=PatrickGod)
+### 9. [.NET 7 Web API - Create JSON Web Tokens (JWT) - User Registration / Login /](https://www.youtube.com/watch?v=UwruwHl3BlU&ab_channel=PatrickGod)
 
-### 10. [.NET 7 Web API 🔒 Role-Based Authorization with JSON Web Tokens (JWT) & the dotnet user-jwts CLI](https://www.youtube.com/watch?v=6sMPvucWNRE&ab_channel=PatrickGod)
+### 10. [.NET 7 Web API - Role-Based Authorization with JSON Web Tokens (JWT) & the dotnet user-jwts CLI](https://www.youtube.com/watch?v=6sMPvucWNRE&ab_channel=PatrickGod)
 
 ### 11. [Swagger Documentation --> Bearer Authentication](https://swagger.io/docs/specification/authentication/bearer-authentication/#:~:text=The%20bearer%20token%20is%20a,Authorization%3A%20Bearer)
 
 ### 12. [How To Add JWT Authentication To An ASP.NET Core API](https://medium.com/geekculture/how-to-add-jwt-authentication-to-an-asp-net-core-api-84e469e9f019)
 
 ### 13. [How to Implement JWT Authentication in Asp.Net Core Web API](https://labpys.com/how-to-implement-jwt-authentication-in-asp-net-core-web-api/)
+
+### 14. [Using Authorization with Swagger in ASP.NET Core](https://code-maze.com/swagger-authorization-aspnet-core/)
+
+### 15. [ASP.NET Core Swagger Documentation with Bearer Authentication](https://dev.to/eduardstefanescu/aspnet-core-swagger-documentation-with-bearer-authentication-40l6)
 
 # Pruebas de Ejecución
 
@@ -1432,3 +1556,15 @@ Update-Database -Context ApplicationDbContext
 ```
 
 ![](./img/8.png)
+
+**Nota:** para revertir una migración ejecutaríamos el comando 
+
+```bash
+update-database nombreMigraciónAvolver
+```
+
+Pero si en cambio lo que queremos es eliminar directamente la última migración que hicimos porque quizás nos equivocásemos o algo, el comando sería:
+
+```bash
+remove-migration
+```

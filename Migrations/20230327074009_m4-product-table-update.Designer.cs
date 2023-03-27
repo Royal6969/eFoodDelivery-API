@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using eFoodDelivery_API.DbContexts;
 
@@ -11,9 +12,11 @@ using eFoodDelivery_API.DbContexts;
 namespace eFoodDelivery_API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class SqlServerContextModelSnapshot : ModelSnapshot
+    [Migration("20230327074009_m4-product-table-update")]
+    partial class m4producttableupdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -156,72 +159,6 @@ namespace eFoodDelivery_API.Migrations
                     b.ToTable("dlk_user_tokens", "dlk_efooddelivery_api");
                 });
 
-            modelBuilder.Entity("eFoodDelivery_API.Entities.Cart", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("Md_date")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("Md_date");
-
-                    b.Property<Guid>("Md_uuid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("Md_uuid");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("UserId");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("dwh_cart", "dwh_efooddelivery_api");
-                });
-
-            modelBuilder.Entity("eFoodDelivery_API.Entities.CartItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("Id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CartId")
-                        .HasColumnType("int")
-                        .HasColumnName("CartId");
-
-                    b.Property<DateTime>("Md_date")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("Md_date");
-
-                    b.Property<Guid>("Md_uuid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("Md_uuid");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int")
-                        .HasColumnName("ProductId");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int")
-                        .HasColumnName("Quantity");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CartId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("dwh_cartItem", "dwh_efooddelivery_api");
-                });
-
             modelBuilder.Entity("eFoodDelivery_API.Entities.Product", b =>
                 {
                     b.Property<int>("Id")
@@ -281,8 +218,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Almuerzo",
                             Description = "Receta de cocina con base de arroz, con origen en la actual Comunidad Valenciana, hoy en día muy popular en toda España y servida en restaurantes de todo el mundo.​",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/1.paella-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1244),
-                            Md_uuid = new Guid("667be923-b4e6-41c4-b8a7-5dff53f89562"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2040),
+                            Md_uuid = new Guid("314a4412-8ad6-4260-905a-90cb3d740bdf"),
                             Name = "Paella Valenciana",
                             Price = 9.9499999999999993,
                             Tag = "Mejor valorados"
@@ -293,8 +230,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Almuerzo",
                             Description = "Tortilla u omelet ​ a la que se le agrega patatas troceadas.​ Se trata de uno de los platos más conocidos y emblemáticos de la cocina española.​",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/2.tortilla-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1253),
-                            Md_uuid = new Guid("88352e45-0d75-47e9-a61d-7ff6c9d32c94"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2049),
+                            Md_uuid = new Guid("a65a7607-0f46-4566-a491-33205db7a3fb"),
                             Name = "Tortilla de Patatas",
                             Price = 7.9900000000000002,
                             Tag = "Más vendidos"
@@ -305,8 +242,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Almuerzo",
                             Description = "​El salmorejo cordobés es una crema servida habitualmente como primer plato. Se elabora mediante una cierta cantidad de miga de pan,​ a la que se le incluye además ajo, aceite de oliva, sal y tomates.",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/3.salmorejo-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1261),
-                            Md_uuid = new Guid("10d87e26-b2ea-4c56-9410-3da8b82f3a8a"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2070),
+                            Md_uuid = new Guid("df3f4204-0ed8-465e-a03f-65118de181e6"),
                             Name = "Salmorejo Cordobés",
                             Price = 6.4900000000000002,
                             Tag = "Recomendados"
@@ -317,8 +254,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Almuerzo",
                             Description = "​Conjunto de hortalizas cocidas con unos aditamentos de carne, pescado y ave condimentada con una salsa mayonesa\", donde la remolacha, las judías verdes y las alcaparras forman parte de la receta.",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/4.ensaladilla-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1280),
-                            Md_uuid = new Guid("d8c504fe-28b8-4e9d-9186-77e642864437"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2077),
+                            Md_uuid = new Guid("d50b4b2e-4694-4824-816d-11716917070d"),
                             Name = "Ensaladilla Rusa",
                             Price = 5.9500000000000002,
                             Tag = "Más vendidos"
@@ -329,8 +266,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Almuerzo",
                             Description = "​Preparación culinaria de España y Portugal habitual de la gente que se dedica a la trashumancia española. Se elabora principalmente con pedazos de la miga de pan tostado acompañados de carnes y verduras.",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/5.migas-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1287),
-                            Md_uuid = new Guid("8faee55a-fe3c-4b12-b16b-be3f2438eaac"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2084),
+                            Md_uuid = new Guid("ad3aea09-18d1-4d48-9673-854f90cde387"),
                             Name = "Migas Manchegas",
                             Price = 10.99,
                             Tag = "Recomendados"
@@ -341,8 +278,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Cena",
                             Description = "​Se sirven generalmente como una tapa en muchos bares, o como raciones. Como algunos otros platos de marisco se suelen servir junto con una rodaja de limón.",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/6.calamares-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1294),
-                            Md_uuid = new Guid("8844044d-43cf-48a7-afc6-c854ed3d1261"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2091),
+                            Md_uuid = new Guid("253321dc-40bb-46eb-ac0b-44f5dee5fbd9"),
                             Name = "Calamares a la Romana",
                             Price = 8.75,
                             Tag = "Mejor valorados"
@@ -353,8 +290,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Cena",
                             Description = "​Se trata de un plato festivo elaborado con pulpo cocido entero (generalmente en ollas de cobre) que está presente en las fiestas, ferias y romerías de Galicia.",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/7.pulpo-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1300),
-                            Md_uuid = new Guid("5cf14c2b-76ee-48f0-b46a-7391fd41abad"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2101),
+                            Md_uuid = new Guid("c5697cc4-c8fd-4b9a-b51f-04722724096a"),
                             Name = "Pulpo a la Gallega",
                             Price = 8.5,
                             Tag = "Recomendados"
@@ -365,8 +302,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Almuerzo",
                             Description = "Guiso cuyo ingrediente principal son los garbanzos y los secundarios, aunque con gran protagonismo, diversas verduras, carnes y tocino de cerdo con algún embutido.​",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/8.cocido-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1310),
-                            Md_uuid = new Guid("24052b73-cb25-457a-9258-9de381e24ce0"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2108),
+                            Md_uuid = new Guid("02b2439b-69b7-4b43-b610-5ecec51fe5c2"),
                             Name = "Cocido Madrileño",
                             Price = 9.9499999999999993,
                             Tag = "Recomendados"
@@ -377,8 +314,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Cena",
                             Description = "​Porción de masa hecha de una salsa densa como la bechamel y un picadillo de diversos ingredientes, que ha sido rebozada en huevo y pan rallado, y frita en abundante aceite.",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/9.croquetas-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1317),
-                            Md_uuid = new Guid("27bd70e0-a88c-42ca-835b-0f31c06ce72e"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2115),
+                            Md_uuid = new Guid("95af8f01-5f44-44a2-b591-3b01e3b72e34"),
                             Name = "Croquetas",
                             Price = 7.9900000000000002,
                             Tag = "Más vendidos"
@@ -389,8 +326,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Postre",
                             Description = "​Plato hecho de una rebanada de pan (habitualmente de varios días) que es empapada en leche, almíbar o vino y, tras ser rebozada en huevo, se fríe en una sartén con aceite.",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/10.torrijas-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1324),
-                            Md_uuid = new Guid("553f5518-b978-4a90-ab54-6bd7e5c74538"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2122),
+                            Md_uuid = new Guid("358001f5-2811-4737-8a05-5491d8d2987a"),
                             Name = "Torrijas",
                             Price = 6.4500000000000002,
                             Tag = "Mejor valorados"
@@ -401,8 +338,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Postre",
                             Description = "​Tipo de fruta de sartén que se suele servir como dulce navideño o de Semana Santa, típico de Andalucía y otras zonas de España, elaborado con masa de harina, frito en aceite de oliva y pasado por miel.",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/11.pestiños-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1330),
-                            Md_uuid = new Guid("81b5e39c-23f5-43a6-828d-379874f9a78a"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2131),
+                            Md_uuid = new Guid("d801ce69-eca3-4207-9de5-578bd966ff06"),
                             Name = "Pestiños",
                             Price = 5.75,
                             Tag = "Recomendados"
@@ -413,8 +350,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Desayuno",
                             Description = "​Es una fruta de sartén hecha de agua, harina (de trigo generalmente, aunque puede ser de otro origen), aceite y sal. Pueden tener formas de bastón, en lazos o rulos (espirales).",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/12.churros-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1340),
-                            Md_uuid = new Guid("e88c852b-3713-4449-a7a8-0d45d213bb7f"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2138),
+                            Md_uuid = new Guid("0eb90791-c92c-46c2-9843-debb18bead56"),
                             Name = "Churros",
                             Price = 3.9900000000000002,
                             Tag = "Más vendidos"
@@ -425,8 +362,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Postre",
                             Description = "​Tipo de fritura de sartén dulce propia de la repostería española realizado a base de harina cocida con leche y azúcar hasta que este preparado espesa, cortándose la masa resultante en porciones que posteriormente se fríen.",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/13.leche-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1347),
-                            Md_uuid = new Guid("cd55d9ec-0e48-42ff-a86a-c8057fde69ba"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2145),
+                            Md_uuid = new Guid("60276635-ff0e-4fcc-825c-ddbeefb8859d"),
                             Name = "Leche Frita",
                             Price = 4.75,
                             Tag = "Recomendados"
@@ -437,8 +374,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Postre",
                             Description = "Son una receta dulce propia de Extremadura que se preparan desde Todos los Santos, pasando por Carnaval hasta Semana Santa. Se trata de una receta muy antigua que nos recuerda a las rosquillas por el tipo de masa.​",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/14.huesillos-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1354),
-                            Md_uuid = new Guid("bb2bb350-51f3-4a74-898a-e0e72bd52702"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2152),
+                            Md_uuid = new Guid("f57d0afa-086f-477e-af0c-d641091f8fa1"),
                             Name = "Huesillos Extremeños",
                             Price = 3.5,
                             Tag = "Recomendados"
@@ -449,8 +386,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Bebidas",
                             Description = "​Lata de CocaCola de 33cl. CocaCola Zero (sin azúcar) o CocaCola Original",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/15.cocacola-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1361),
-                            Md_uuid = new Guid("9599a220-352d-431c-8548-24e7f940b198"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2161),
+                            Md_uuid = new Guid("88d9c66d-d2d5-4a94-bc0e-3e4bbd4dda14"),
                             Name = "CocaCola",
                             Price = 1.5,
                             Tag = "Más vendidos"
@@ -461,8 +398,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Bebidas",
                             Description = "Lata de Fanta de 33cl. Fanta de naranja o Fanta de limón​",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/16.fanta-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1370),
-                            Md_uuid = new Guid("b9df132f-8e10-4f32-9533-8815f98eb267"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2167),
+                            Md_uuid = new Guid("d3de7271-b28e-4e2c-84c1-7cff91b49ffd"),
                             Name = "Fanta",
                             Price = 1.5,
                             Tag = "Recomendados"
@@ -473,8 +410,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Bebidas",
                             Description = "Lata de 7up de 33cl. 7up free (sin azúcar) o 7up original​",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/17.7up-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1377),
-                            Md_uuid = new Guid("0cee627f-045f-4016-b8cc-bc351c716a5a"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2174),
+                            Md_uuid = new Guid("8a116297-74f3-49ca-88f9-6ffd03402fd1"),
                             Name = "7up",
                             Price = 1.5,
                             Tag = "Recomendados"
@@ -485,8 +422,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Bebidas",
                             Description = "​Lata de Cruzcampo de 33cl. Cerveza Pilsen",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/18.cruzcampo-pilsen-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1384),
-                            Md_uuid = new Guid("6fde262a-ddea-496c-a880-d637d88cd5f6"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2181),
+                            Md_uuid = new Guid("844f23e1-73ac-4b95-ae9b-624e6d9e410a"),
                             Name = "Cruzcampo Pilsen",
                             Price = 1.8,
                             Tag = "Más vendidos"
@@ -497,8 +434,8 @@ namespace eFoodDelivery_API.Migrations
                             Category = "Bebidas",
                             Description = "​Lata de Cruzcampo de 33cl. Cerveza Especial",
                             Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/19.cruzcampo-especial-nobg.png",
-                            Md_date = new DateTime(2023, 3, 27, 9, 54, 6, 836, DateTimeKind.Local).AddTicks(1391),
-                            Md_uuid = new Guid("a65d20c3-cf05-4cae-9fb8-628bd3946cbd"),
+                            Md_date = new DateTime(2023, 3, 27, 9, 40, 8, 856, DateTimeKind.Local).AddTicks(2191),
+                            Md_uuid = new Guid("681574b6-127a-4c37-92cf-84f8a1efaea9"),
                             Name = "Cruzcampo Especial",
                             Price = 1.8999999999999999,
                             Tag = "Mejor valorados"
@@ -623,28 +560,6 @@ namespace eFoodDelivery_API.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("eFoodDelivery_API.Entities.CartItem", b =>
-                {
-                    b.HasOne("eFoodDelivery_API.Entities.Cart", null)
-                        .WithMany("CartItemsList")
-                        .HasForeignKey("CartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("eFoodDelivery_API.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("eFoodDelivery_API.Entities.Cart", b =>
-                {
-                    b.Navigation("CartItemsList");
                 });
 #pragma warning restore 612, 618
         }

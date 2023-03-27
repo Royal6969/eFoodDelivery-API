@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace eFoodDelivery_API.Entities
 {
-    [Table("product", Schema = "dwh_efooddelivery_api")]
+    [Table("dwh_product", Schema = "dwh_efooddelivery_api")]
     public class Product
     {
         [Column("Md_uuid")]

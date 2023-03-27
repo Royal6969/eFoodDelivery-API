@@ -16,6 +16,8 @@ namespace eFoodDelivery_API.DbContexts
         // navigation properties for entities (also it creates the tables)
         public DbSet<ApplicationUser> ApplicationUsersDbSet { get; set; }
         public DbSet<Product> ProductsDbSet { get; set; }
+        public DbSet<Cart> CartDbSet { get; set; }
+        public DbSet<CartItem> CartItemsDbSet { get; set; }
 
         // overrriding the OnModelCreating() method for customize our entities (tables)
         protected override void OnModelCreating(ModelBuilder builder)
@@ -32,7 +34,7 @@ namespace eFoodDelivery_API.DbContexts
             builder.Entity<IdentityUserClaim<string>>().ToTable("dlk_user_claim");
             builder.Entity<IdentityUserLogin<string>>().ToTable("dlk_user_login");
             builder.Entity<IdentityUserToken<string>>().ToTable("dlk_user_tokens");
-            
+        /*        
             builder.Entity<Product>().HasData(
                 new Product
                 {
@@ -263,6 +265,7 @@ namespace eFoodDelivery_API.DbContexts
                     Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/19.cruzcampo-especial-nobg.png"
                 }
             );
+        */
         }
     }
 }
