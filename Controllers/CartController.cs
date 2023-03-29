@@ -25,10 +25,10 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
-        [HttpPost]
         // we need a userId to find out which user's shopping cart are we working with
         // then we want to find out the productId that user wants to either add to the shopping cart update or remove
         // finally we need a counter by which the product needs to be updated
+        [HttpPost]
         public async Task<ActionResult<ApiResponse>> AddOrUpdateCartItem(string userId, int productId, int updateQuantity)
         {
             ////////////////////////////////////////// Cart Rules /////////////////////////////////////////////
@@ -67,7 +67,7 @@ namespace eFoodDelivery_API.Controllers
             {
                 // create a cart and add the cart item
                 Cart newCart = new Cart();
-                cart.UserId = userId;
+                newCart.UserId = userId;
 
                 // add the new cart to db
                 _dbContext.CartDbSet.Add(newCart);
@@ -78,7 +78,7 @@ namespace eFoodDelivery_API.Controllers
                 cartItem.Quantity = updateQuantity;
                 cartItem.CartId = newCart.Id;
                 // when we're working with FK, the product is a navigation property, so I have to set that to be null,
-                // // because if I don't do that, then it will try to create a new Product, and eg it will fail creating the product image as null...
+                // because if I don't do that, then it will try to create a new Product, and eg it will fail creating the product image as null...
                 cartItem.Product = null;
 
                 // add the cartItem to db

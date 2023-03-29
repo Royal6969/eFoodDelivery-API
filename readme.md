@@ -1432,10 +1432,10 @@ public class CartController : ControllerBase
 ## 4.7. CartController.cs --> AddOrUpdateCartItem()
 
 ```csharp
-[HttpPost]
 // we need a userId to find out which user's shopping cart are we working with
 // then we want to find out the productId that user wants to either add to the shopping cart update or remove
 // finally we need a counter by which the product needs to be updated
+[HttpPost]
 public async Task<ActionResult<ApiResponse>> AddOrUpdateCartItem(string userId, int productId, int updateQuantity)
 {
     ////////////////////////////////////////// Cart Rules /////////////////////////////////////////////
@@ -1474,7 +1474,7 @@ public async Task<ActionResult<ApiResponse>> AddOrUpdateCartItem(string userId, 
     {
         // create a cart and add the cart item
         Cart newCart = new Cart();
-        cart.UserId = userId;
+        newCart.UserId = userId;
 
         // add the new cart to db
         _dbContext.CartDbSet.Add(newCart);
@@ -1541,6 +1541,10 @@ public async Task<ActionResult<ApiResponse>> AddOrUpdateCartItem(string userId, 
 }
 ```
 
+## 4.8. Pruebas de Ejecución del Carrito
+
+[Pruebas de Ejecución del Carrito --> AddOrUpdateCartItem(string userId, int productId, int updateQuantity)](#cartcontrollercs----addorupdatecartitemstring-userid-int-productid-int-updatequantity)
+
 # Webgrafía y Enlaces de Interés
 
 ### 1. [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
@@ -1572,6 +1576,10 @@ public async Task<ActionResult<ApiResponse>> AddOrUpdateCartItem(string userId, 
 ### 14. [Using Authorization with Swagger in ASP.NET Core](https://code-maze.com/swagger-authorization-aspnet-core/)
 
 ### 15. [ASP.NET Core Swagger Documentation with Bearer Authentication](https://dev.to/eduardstefanescu/aspnet-core-swagger-documentation-with-bearer-authentication-40l6)
+
+### 16. [ShoppingCartService Explanation](https://code-maze.com/unit-testing-aspnetcore-web-api/)
+
+### 17. [ASP.NET Core Blazor: Creating Shopping Cart with EF and Web API](https://social.technet.microsoft.com/wiki/contents/articles/51755.asp-net-core-blazor-creating-shopping-cart-with-ef-and-web-api.aspx)
 
 # Pruebas de Ejecución
 
@@ -1627,6 +1635,28 @@ public async Task<ActionResult<ApiResponse>> AddOrUpdateCartItem(string userId, 
 ![](./img/42.png)
 ![](./img/43.png)
 ![](./img/44.png)
+
+## CartController.cs --> AddOrUpdateCartItem(string userId, int productId, int updateQuantity)
+
+### Crear un carrito
+
+![](./img/49.png)
+![](./img/50.png)
+![](./img/51.png)
+
+### Añadir o quitar productos(items) del carrito
+
+![](./img/52.png)
+![](./img/53.png)
+![](./img/54.png)
+![](./img/55.png)
+![](./img/56.png)
+![](./img/57.png)
+
+### Crear un carrito con otro usuario
+
+![](./img/58.png)
+![](./img/59.png)
 
 # Extras
 
