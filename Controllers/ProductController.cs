@@ -125,21 +125,21 @@ namespace eFoodDelivery_API.Controllers
                         return BadRequest();
                     }
                     
-                    // Product productFetchedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
-                    Product productFetchedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
+                    // Product productRetrievedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
+                    Product productRetrievedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
 
-                    if (productFetchedFromDb == null) 
+                    if (productRetrievedFromDb == null) 
                     {
                         _apiResponse.StatusCode = HttpStatusCode.BadRequest;
                         _apiResponse.Success = false;
                         return BadRequest(); 
                     }
 
-                    productFetchedFromDb.Name = productUpdateDTO.Name;
-                    productFetchedFromDb.Description = productUpdateDTO.Description;
-                    productFetchedFromDb.Tag = productUpdateDTO.Tag;
-                    productFetchedFromDb.Category = productUpdateDTO.Category;
-                    productFetchedFromDb.Price = productUpdateDTO.Price;
+                    productRetrievedFromDb.Name = productUpdateDTO.Name;
+                    productRetrievedFromDb.Description = productUpdateDTO.Description;
+                    productRetrievedFromDb.Tag = productUpdateDTO.Tag;
+                    productRetrievedFromDb.Category = productUpdateDTO.Category;
+                    productRetrievedFromDb.Price = productUpdateDTO.Price;
 
                     if (productUpdateDTO.Image != null && productUpdateDTO.Image.Length > 0)
                     {
@@ -148,14 +148,14 @@ namespace eFoodDelivery_API.Controllers
 
                         // first, we need to delete the old image, and we have to get it with the URL after the second slash
                         // https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/6622221b-7bf8-4204-9fb8-8e96d4e6490c.jpg
-                        await _blobService.DeleteBlob(productFetchedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);
+                        await _blobService.DeleteBlob(productRetrievedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);
                         
                         // second, upload the new product
-                        productFetchedFromDb.Image = await _blobService.UploadBlob(imageName, Constants.SD_STORAGE_CONTAINER, productUpdateDTO.Image); // upload the blob and it will return back the URL which we will save in the image
+                        productRetrievedFromDb.Image = await _blobService.UploadBlob(imageName, Constants.SD_STORAGE_CONTAINER, productUpdateDTO.Image); // upload the blob and it will return back the URL which we will save in the image
                     }
 
                     // update the object in DB
-                    _dbContext.ProductsDbSet.Update(productFetchedFromDb);
+                    _dbContext.ProductsDbSet.Update(productRetrievedFromDb);
                     _dbContext.SaveChanges();
                     _apiResponse.StatusCode = HttpStatusCode.NoContent;
 
@@ -186,10 +186,10 @@ namespace eFoodDelivery_API.Controllers
                     return BadRequest(); 
                 }
 
-                // Product productFetchedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
-                Product productFetchedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
+                // Product productRetrievedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
+                Product productRetrievedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
 
-                if (productFetchedFromDb == null) 
+                if (productRetrievedFromDb == null) 
                 {
                     _apiResponse.StatusCode = HttpStatusCode.BadRequest;
                     _apiResponse.Success = false;
@@ -198,10 +198,10 @@ namespace eFoodDelivery_API.Controllers
 
                 // first, we need to delete the old image, and we have to get it with the URL after the second slash
                 // https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/6622221b-7bf8-4204-9fb8-8e96d4e6490c.jpg
-                await _blobService.DeleteBlob(productFetchedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);
+                await _blobService.DeleteBlob(productRetrievedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);
                 
                 // remove the object in DB
-                _dbContext.ProductsDbSet.Remove(productFetchedFromDb);
+                _dbContext.ProductsDbSet.Remove(productRetrievedFromDb);
                 _dbContext.SaveChanges();
                 _apiResponse.StatusCode = HttpStatusCode.NoContent;
 

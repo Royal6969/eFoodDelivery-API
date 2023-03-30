@@ -713,21 +713,21 @@ public async Task<ActionResult<ApiResponse>> UpdateProduct(int id, [FromForm] Pr
         {
             if (productUpdateDTO == null || id != productUpdateDTO.Id) return BadRequest();
 
-            // Product productFetchedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
-            Product productFetchedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
+            // Product productRetrievedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
+            Product productRetrievedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
 
-            if (productFetchedFromDb == null) 
+            if (productRetrievedFromDb == null) 
             {
                 _apiResponse.StatusCode = HttpStatusCode.BadRequest;
                 _apiResponse.Success = false;
                 return BadRequest();
             }
 
-            productFetchedFromDb.Name = productUpdateDTO.Name;
-            productFetchedFromDb.Description = productUpdateDTO.Description;
-            productFetchedFromDb.Tag = productUpdateDTO.Tag;
-            productFetchedFromDb.Category = productUpdateDTO.Category;
-            productFetchedFromDb.Price = productUpdateDTO.Price;
+            productRetrievedFromDb.Name = productUpdateDTO.Name;
+            productRetrievedFromDb.Description = productUpdateDTO.Description;
+            productRetrievedFromDb.Tag = productUpdateDTO.Tag;
+            productRetrievedFromDb.Category = productUpdateDTO.Category;
+            productRetrievedFromDb.Price = productUpdateDTO.Price;
 
             if (productUpdateDTO.Image != null && productUpdateDTO.Image.Length > 0)
             {
@@ -736,14 +736,14 @@ public async Task<ActionResult<ApiResponse>> UpdateProduct(int id, [FromForm] Pr
 
                 // first, we need to delete the old image, and we have to get it with the URL after the second slash
                 // https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/6622221b-7bf8-4204-9fb8-8e96d4e6490c.jpg  
-                await _blobService.DeleteBlob(productFetchedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);
+                await _blobService.DeleteBlob(productRetrievedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);
                         
                 // second, upload the new product
-                productFetchedFromDb.Image = await _blobService.UploadBlob(imageName, Constants.SD_STORAGE_CONTAINER, productUpdateDTO.Image); // upload the blob and it will return back the URL which we will save in the image
+                productRetrievedFromDb.Image = await _blobService.UploadBlob(imageName, Constants.SD_STORAGE_CONTAINER, productUpdateDTO.Image); // upload the blob and it will return back the URL which we will save in the image
             }
 
             // update the object in DB
-            _dbContext.ProductsDbSet.Update(productFetchedFromDb);
+            _dbContext.ProductsDbSet.Update(productRetrievedFromDb);
             _dbContext.SaveChanges();
             _apiResponse.StatusCode = HttpStatusCode.NoContent;
 
@@ -783,10 +783,10 @@ public async Task<ActionResult<ApiResponse>> DeleteProduct(int id)
             return BadRequest();
         }
 
-        // Product productFetchedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
-        Product productFetchedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
+        // Product productRetrievedFromDb = await _dbContext.ProductsDbSet.FirstOrDefaultAsync(p => p.Id == id);
+        Product productRetrievedFromDb = await _dbContext.ProductsDbSet.FindAsync(id); // FindAsync() search by PK and in this case it works
 
-        if (productFetchedFromDb == null) 
+        if (productRetrievedFromDb == null) 
         {
             _apiResponse.StatusCode = HttpStatusCode.BadRequest;
             _apiResponse.Success = false;
@@ -795,10 +795,10 @@ public async Task<ActionResult<ApiResponse>> DeleteProduct(int id)
         
         // first, we need to delete the old image, and we have to get it with the URL after the second slash
         // https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/6622221b-7bf8-4204-9fb8-8e96d4e6490c.jpg
-        await _blobService.DeleteBlob(productFetchedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);
+        await _blobService.DeleteBlob(productRetrievedFromDb.Image.Split('/').Last(), Constants.SD_STORAGE_CONTAINER);
                 
         // remove the object in DB
-        _dbContext.ProductsDbSet.Remove(productFetchedFromDb);
+        _dbContext.ProductsDbSet.Remove(productRetrievedFromDb);
         _dbContext.SaveChanges();
         _apiResponse.StatusCode = HttpStatusCode.NoContent;
 
@@ -921,10 +921,10 @@ public class AuthenticationController : ControllerBase
 public async Task<IActionResult> Register([FromBody] RegisterRequestDTO registerRequestDTO)
 {
     // check if the new user alredy exists
-    ApplicationUser userFetchedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == registerRequestDTO.UserName.ToLower());
+    ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == registerRequestDTO.UserName.ToLower());
 
     // if the user alredy exists --> Error message and BadRequest
-    if (userFetchedFromDb != null)
+    if (userRetrievedFromDb != null)
     {
         _apiResponse.StatusCode = HttpStatusCode.BadRequest;
         _apiResponse.Success = false;
@@ -1025,10 +1025,10 @@ public AuthenticationController(ApplicationDbContext dbContext, IConfiguration c
 public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDTO)
 {
     // when the user tries to login in base his username, we have to retrieve that user from db
-    ApplicationUser userFetchedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == loginRequestDTO.UserName.ToLower());
+    ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == loginRequestDTO.UserName.ToLower());
 
     // we can use a Identity Helper Method to check the password
-    bool valid = await _userManager.CheckPasswordAsync(userFetchedFromDb, loginRequestDTO.Password);
+    bool valid = await _userManager.CheckPasswordAsync(userRetrievedFromDb, loginRequestDTO.Password);
 
     // if password given by user doesn't match with password in db --> BadRequest
     if (!valid)
@@ -1047,16 +1047,16 @@ public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDT
     // we have to convert in array our _JWTsecretKey
     byte[] secretKey = Encoding.ASCII.GetBytes(_JWTsecretKey);
     // we will need the user role so let's get it with an Identity helper method
-    var userRoles = await _userManager.GetRolesAsync(userFetchedFromDb);
+    var userRoles = await _userManager.GetRolesAsync(userRetrievedFromDb);
     // to define properties for the token
     SecurityTokenDescriptor securityTokenDescriptor = new SecurityTokenDescriptor();
     // each one of those properties are defined in a Claim inside a claim array (creating an object of ClaimsIdentity type)
     securityTokenDescriptor.Subject = new ClaimsIdentity(new Claim[]
         {
-            new Claim("fullName", userFetchedFromDb.Name),
-            new Claim("userId", userFetchedFromDb.Id.ToString()),
+            new Claim("fullName", userRetrievedFromDb.Name),
+            new Claim("userId", userRetrievedFromDb.Id.ToString()),
             // there are some claims alredy defined inside ClaimTypes class
-            new Claim(ClaimTypes.Email, userFetchedFromDb.UserName.ToString()),
+            new Claim(ClaimTypes.Email, userRetrievedFromDb.UserName.ToString()),
             new Claim(ClaimTypes.Role, userRoles.FirstOrDefault()),
         });
     // how long the token is valid for ??
@@ -1073,7 +1073,7 @@ public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDT
 
     // populate email and token
     LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
-    loginResponseDTO.Email = userFetchedFromDb.Email;
+    loginResponseDTO.Email = userRetrievedFromDb.Email;
     loginResponseDTO.Token = jwtSecurityTokenHandler.WriteToken(securityToken);
 
     // if the email is null, return again a BadRequest
@@ -1545,6 +1545,62 @@ public async Task<ActionResult<ApiResponse>> AddOrUpdateCartItem(string userId, 
 
 [Pruebas de Ejecución del Carrito --> AddOrUpdateCartItem(string userId, int productId, int updateQuantity)](#cartcontrollercs----addorupdatecartitemstring-userid-int-productid-int-updatequantity)
 
+
+## 4.9. CartController.cs --> GetCart()
+
+```csharp
+[HttpGet]
+public async Task<ActionResult<ApiResponse>> GetCart(string userId)
+{
+    try
+    {
+        if (userId == null) // we can also say ... if (string.IsNullOrEmpty(userId))
+        {
+            _apiResponse.Success = false;
+            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+
+            return BadRequest(_apiResponse);
+        }
+
+        // if the userId is not null, then we want to retrieve the cart
+        Cart cartRetrievedFromDb = _dbContext.CartDbSet
+            // we also want to include cart items
+            .Include(cart => cart.CartItemsList)
+            // including the product, if the user wants to display what is the product name, they can do it
+            // but we have to use ThenInclude() this time because inside cart we only have CartItemsList,
+            // and in CartItem we want to include the Product... so it is the parent, child and the grandchild
+            // so if there were two things that we want to include in cart, then we can use another Include() statement here and add that
+            // but we want to include something that is inside the CartItemList
+            .ThenInclude(product => product.Product)
+            // we dont't have to pass anything here because cart is always one per userId, but in any case, let's write the condition
+            .FirstOrDefault(user => user.UserId == userId)
+        ;
+
+        // calculate the total amount of the cart
+        if (cartRetrievedFromDb.CartItemsList != null && cartRetrievedFromDb.CartItemsList.Count() > 0)
+            cartRetrievedFromDb.Total = cartRetrievedFromDb.CartItemsList.Sum(cart => cart.Quantity * cart.Product.Price);
+
+        _apiResponse.Result = cartRetrievedFromDb;      // once we have the cart, we will assign that to the result here
+        _apiResponse.StatusCode = HttpStatusCode.OK;    // set the status Ok and return the Ok with the api response
+
+        return Ok(_apiResponse);
+    } 
+    catch (Exception ex)
+    {
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList = new List<string> { ex.Message };
+        _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+    }
+
+    return _apiResponse;
+}
+```
+
+## 4.10. Prueba de Ejecución de la obtención del Carrito
+
+[Pruebas de Ejecución de la obtención del Carrito --> GetCart(string userId)](#cartcontrollercs----getcartstring-userid)
+
+
 # Webgrafía y Enlaces de Interés
 
 ### 1. [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
@@ -1657,6 +1713,16 @@ public async Task<ActionResult<ApiResponse>> AddOrUpdateCartItem(string userId, 
 
 ![](./img/58.png)
 ![](./img/59.png)
+
+## CartController.cs --> GetCart(string userId)
+
+![](./img/60.png)
+![](./img/61.png)
+![](./img/62.png)
+![](./img/63.png)
+![](./img/64.png)
+![](./img/65.png)
+![](./img/66.png)
 
 # Extras
 

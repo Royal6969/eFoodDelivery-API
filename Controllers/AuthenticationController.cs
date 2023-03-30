@@ -13,7 +13,7 @@ using System.Text;
 
 namespace eFoodDelivery_API.Controllers
 {
-    // [Route("api/[controller]")]
+    // [Route("api/[controller]")] // instead a dynamic route, if I change the controller name, the route does not get updated
     [Route("api/Authentication")]
     [ApiController]
     public class AuthenticationController : ControllerBase
@@ -39,10 +39,10 @@ namespace eFoodDelivery_API.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDTO)
         {
             // when the user tries to login in base his username, we have to retrieve that user from db
-            ApplicationUser userFetchedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == loginRequestDTO.UserName.ToLower());
+            ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == loginRequestDTO.UserName.ToLower());
 
             // we can use a Identity Helper Method to check the password
-            bool valid = await _userManager.CheckPasswordAsync(userFetchedFromDb, loginRequestDTO.Password);
+            bool valid = await _userManager.CheckPasswordAsync(userRetrievedFromDb, loginRequestDTO.Password);
 
             // if password given by user doesn't match with password in db --> BadRequest
             if (!valid)
@@ -61,16 +61,16 @@ namespace eFoodDelivery_API.Controllers
             // we have to convert in array our _JWTsecretKey
             byte[] secretKey = Encoding.ASCII.GetBytes(_JWTsecretKey);
             // we will need the user role so let's get it with an Identity helper method
-            var userRoles = await _userManager.GetRolesAsync(userFetchedFromDb);
+            var userRoles = await _userManager.GetRolesAsync(userRetrievedFromDb);
             // to define properties for the token
             SecurityTokenDescriptor securityTokenDescriptor = new SecurityTokenDescriptor();
             // each one of those properties are defined in a Claim inside a claim array (creating an object of ClaimsIdentity type)
             securityTokenDescriptor.Subject = new ClaimsIdentity(new Claim[]
             {
-                new Claim("fullName", userFetchedFromDb.Name),
-                new Claim("userId", userFetchedFromDb.Id.ToString()),
+                new Claim("fullName", userRetrievedFromDb.Name),
+                new Claim("userId", userRetrievedFromDb.Id.ToString()),
                 // there are some claims alredy defined inside ClaimTypes class
-                new Claim(ClaimTypes.Email, userFetchedFromDb.UserName.ToString()),
+                new Claim(ClaimTypes.Email, userRetrievedFromDb.UserName.ToString()),
                 new Claim(ClaimTypes.Role, userRoles.FirstOrDefault()),
             });
             // how long the token is valid for ??
@@ -87,7 +87,7 @@ namespace eFoodDelivery_API.Controllers
 
             // populate email and token
             LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
-            loginResponseDTO.Email = userFetchedFromDb.Email;
+            loginResponseDTO.Email = userRetrievedFromDb.Email;
             loginResponseDTO.Token = jwtSecurityTokenHandler.WriteToken(securityToken);
 
             // if the email is null, return again a BadRequest
@@ -113,10 +113,10 @@ namespace eFoodDelivery_API.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO registerRequestDTO)
         {
             // check if the new user alredy exists
-            ApplicationUser userFetchedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == registerRequestDTO.UserName.ToLower());
+            ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == registerRequestDTO.UserName.ToLower());
 
             // if the user alredy exists --> Error message and BadRequest
-            if (userFetchedFromDb != null)
+            if (userRetrievedFromDb != null)
             {
                 _apiResponse.StatusCode = HttpStatusCode.BadRequest;
                 _apiResponse.Success = false;
