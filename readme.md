@@ -1281,7 +1281,7 @@ Pero si hago login como administrador, y cojo el token de éste, pongo en el inp
 
 # 4. Cart y CartItem
 
-## 4.1. Entidad del carrito
+## 4.1. Entities --> Cart.cs
 
 ```csharp
 [Table("dwh_cart", Schema = "dwh_efooddelivery_api")]
@@ -1325,7 +1325,7 @@ public class Cart
 }
 ```
 
-## 4.2. Entidad del Objeto del Carrito
+## 4.2. Entities --> CartItem.cs
 
 ```csharp
 [Table("dwh_cartItem", Schema = "dwh_efooddelivery_api")]
@@ -1398,6 +1398,8 @@ Luego hacemos click derecho sobre el *csproj* y nos saldrá la opción de "EF Co
 ![](./img/46.png)
 ![](./img/47.png)
 ![](./img/48.png)
+
+**Nota:** como podrás notar, en el diagrama ya aparecen las entidades del pedido y de los detalles del pedido, pero eso es porque cuando iba por esa parte más adelante, sobreescribí esta captura de pantalla. Simplemente, ignora en esta última captura esas dos entidades.
 
 ## 4.6. Controllers --> CartController.cs
 
@@ -1600,6 +1602,186 @@ public async Task<ActionResult<ApiResponse>> GetCart(string userId)
 
 [Pruebas de Ejecución de la obtención del Carrito --> GetCart(string userId)](#cartcontrollercs----getcartstring-userid)
 
+# 5. Pedido
+
+El punto final de esta API es el Pedido y su gestión.
+
+Desde el carrito (continuando hacia el resumen y método de pago), cuando algún usuario haga un pedido, necesitamos guardarlo en una tabla en BBDD.
+
+Y dentro del pedido, necesitamos establecer una relación padre-hijo entre la cabecera del pedido y los detalles del pedido. 
+
+Esto se entenderá mejor más adelante a medida que lo vaya haciendo y explicando las entidades.
+
+## 5.1. Entities --> Order.cs
+
+```csharp
+[Table("dwh_order", Schema = "dwh_efooddelivery_api")]
+public class Order
+{
+    [Column("Md_uuid")]
+    [Display(Name = "Md_uuid")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Md_uuid { get; set; } = Guid.NewGuid();
+
+    [Column("Md_date")]
+    [Display(Name = "Md_date")]
+    [DataType(DataType.DateTime)]
+    [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
+    public DateTime Md_date { get; set; } = DateTime.Now;
+
+    [Key]
+    [Column("OrderId")]
+    [Display(Name = "OrderId")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int OrderId { get; set; }
+
+    [Required]
+    [Column("ClientName")]
+    [Display(Name = "ClientName")]
+    public string ClientName { get; set; }
+
+    [Required]
+    [Column("ClientPhone")]
+    [Display(Name = "ClientPhone")]
+    public string ClientPhone { get; set; }
+
+    [Required]
+    [Column("ClientEmail")]
+    [Display(Name = "ClientEmail")]
+    public string ClientEmail { get; set; }
+
+    // we have the application user id that needs to be a FK to the user table
+    // because only if a user is registered, they will be able to place an order 
+    [Column("ClientId")]
+    [Display(Name = "ClientId")]
+    public string ClientId { get; set; }
+
+    [Column("OrderTotal")]
+    [Display(Name = "OrderTotal")]
+    public double OrderTotal { get; set; }
+
+    // let's define an order date, basically defines when the order was placed 
+    // to differentiate it from date metadata
+    [Column("OrderDate")]
+    [Display(Name = "OrderDate")]
+    public DateTime OrderDate { get; set; } 
+
+    // we have the client payment id that basically be the iD od the payment that user makes
+    // this is a column that we add if we want to store the payment information
+    [Column("OrderPaymentID")]
+    [Display(Name = "OrderPaymentID")]
+    public string OrderPaymentID { get; set; }
+
+    [Column("OrderStatus")]
+    [Display(Name = "OrderStatus")]
+    public string OrderStatus { get; set; }
+
+    [Column("OrderQuantityItems")]
+    [Display(Name = "OrderQuantityItems")]
+    public int OrderQuantityItems { get; set; }
+
+
+    /*************************************** Relational fields *************************************/
+    // with EF Core, we can add the navigation property of ApplicationUser and define FK relation
+    [ForeignKey("ClientId")]
+    public ApplicationUser User { get; set; }
+
+    // OneToMany
+    public IEnumerable<OrderDetails> OrderDetails { get; set; }
+}
+```
+
+## 5.2. Entities --> OrderDetails.cs
+
+```csharp
+[Table("dwh_orderDetails", Schema = "dwh_efooddelivery_api")]
+public class OrderDetails
+{
+    [Column("Md_uuid")]
+    [Display(Name = "Md_uuid")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Md_uuid { get; set; } = Guid.NewGuid();
+
+    [Column("Md_date")]
+    [Display(Name = "Md_date")]
+    [DataType(DataType.DateTime)]
+    [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
+    public DateTime Md_date { get; set; } = DateTime.Now;
+
+    [Key]
+    [Column("OrderDetailsId")]
+    [Display(Name = "OrderDetailsId")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int OrderDetailsId { get; set; }
+
+    // we need a mapping with the order id, because in order there is a OneToMany relation
+    // so for that we will have a property OrderId, and inside the order, I will have a collection property of OrderDetails
+    [Required]
+    [Column("OrderId")]
+    [Display(Name = "OrderId")]
+    public int OrderId { get; set; }
+
+    // we need the item id similar to what we had inside the CartItem with the productId
+    [Required]
+    [Column("ItemId")]
+    [Display(Name = "ItemId")]
+    public int ItemId { get; set; }
+
+    // we need the quantity of the item that they want to order
+    [Required]
+    [Column("ItemQuantity")]
+    [Display(Name = "ItemQuantity")]
+    public int ItemQuantity { get; set; }
+
+    // and from the Product, we can retrieve the name and price of that product
+    // but sometimes what can happen is that product, the name or price gets updated
+    // in that case, we don't want it to toggle the price that order was placed with
+    // so that is why right here I will also add two more columns for item name and item price
+    [Required]
+    [Column("ItemName")]
+    [Display(Name = "ItemName")]
+    public string ItemName { get; set; }
+
+    [Required]
+    [Column("ItemPrice")]
+    [Display(Name = "ItemPrice")]
+    public string ItemPrice { get; set; }
+
+
+    /*************************************** Relational fields *************************************/
+    // we need the navigation property and the FK relation
+    [ForeignKey("ItemId")]
+    public Product Product { get; set; }
+}
+```
+
+## 5.3. DbContexts --> ApplicationDbContext.cs
+
+```csharp
+...
+public DbSet<Order> OrdersDbSet { get; set; }
+public DbSet<OrderDetails> OrderDetailsDbSet { get; set; }
+...
+```
+
+## 5.4. Hacemos una nueva migración para subir las nuevas entidades a la BBDD
+
+```bash
+Add-Migration nombreNuevaMigración -Context ApplicationDbContext
+```
+
+```bash
+Update-Database -Context ApplicationDbContext
+```
+
+![](./img/67.png)
+![](./img/68.png)
+
+## 5.5. Actualizamos nuestro diagrama de BBDD
+
+**Nota:**: recuerda... click derecho sobre lo que sería el csproj.cs (justo debajo de la solución) y darle a *EF Core Power Tools* y generamos el diagarama de nuevo.
+
+![](./img/48.png)
 
 # Webgrafía y Enlaces de Interés
 

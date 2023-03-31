@@ -18,6 +18,8 @@ namespace eFoodDelivery_API.DbContexts
         public DbSet<Product> ProductsDbSet { get; set; }
         public DbSet<Cart> CartDbSet { get; set; }
         public DbSet<CartItem> CartItemsDbSet { get; set; }
+        public DbSet<Order> OrdersDbSet { get; set; }
+        public DbSet<OrderDetails> OrderDetailsDbSet { get; set; }
 
         // overrriding the OnModelCreating() method for customize our entities (tables)
         protected override void OnModelCreating(ModelBuilder builder)
