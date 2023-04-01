@@ -1783,6 +1783,76 @@ Update-Database -Context ApplicationDbContext
 
 ![](./img/48.png)
 
+## 5.6. OrderDTO y OrderDetailsDTO
+
+### 5.6.1. DTOs --> OrderCreateDTO
+
+```csharp
+public class OrderCreateDTO
+{
+    [Required]
+    public string ClientName { get; set; }
+
+    [Required]
+    public string ClientPhone { get; set; }
+
+    [Required]
+    public string ClientEmail { get; set; }
+        
+    public string ClientId { get; set; }
+        
+    public double OrderTotal { get; set; }
+        
+    public string OrderPaymentID { get; set; }
+        
+    public string OrderStatus { get; set; }
+        
+    public int OrderQuantityItems { get; set; }
+
+    public IEnumerable<OrderDetails> OrderDetails { get; set; }
+}
+```
+
+### 5.6.2. DTOs --> OrderUpdateDTO
+
+```csharp
+public class OrderUpdateDTO
+{
+    public int OrderId { get; set; }
+
+    public string ClientName { get; set; }
+
+    public string ClientPhone { get; set; }
+
+    public string ClientEmail { get; set; }
+
+    public string OrderPaymentID { get; set; }
+
+    public string OrderStatus { get; set; }
+}
+```
+
+### 5.6.3. DTOs --> OrderDetailsCreateDTO
+
+```csharp
+public class OrderDetailsCreateDTO
+{
+    [Required]
+    public int ItemId { get; set; }
+
+    [Required]
+    public int ItemQuantity { get; set; }
+
+    [Required]
+    public string ItemName { get; set; }
+
+    [Required]
+    public string ItemPrice { get; set; }
+}
+```
+
+
+
 # Webgrafía y Enlaces de Interés
 
 ### 1. [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
