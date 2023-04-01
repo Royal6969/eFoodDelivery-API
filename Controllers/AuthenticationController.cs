@@ -25,6 +25,7 @@ namespace eFoodDelivery_API.Controllers
         private readonly UserManager<ApplicationUser> _userManager; // Identity helper method
         private readonly RoleManager<IdentityRole> _roleManager;    // Identity helper methods
 
+        // dependency injection
         public AuthenticationController(ApplicationDbContext dbContext, IConfiguration configuration, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager) // using this configuration, we can access to appsettings.json
         {
             _dbContext = dbContext;
