@@ -36,7 +36,7 @@ namespace eFoodDelivery_API.DbContexts
             builder.Entity<IdentityUserClaim<string>>().ToTable("dlk_user_claim");
             builder.Entity<IdentityUserLogin<string>>().ToTable("dlk_user_login");
             builder.Entity<IdentityUserToken<string>>().ToTable("dlk_user_tokens");
-        /*        
+                
             builder.Entity<Product>().HasData(
                 new Product
                 {
@@ -267,7 +267,7 @@ namespace eFoodDelivery_API.DbContexts
                     Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/19.cruzcampo-especial-nobg.png"
                 }
             );
-        */
+        
         }
     }
 }

@@ -1745,7 +1745,8 @@ public class OrderDetails
     [Required]
     [Column("ItemPrice")]
     [Display(Name = "ItemPrice")]
-    public string ItemPrice { get; set; }
+    [Range(1, 99, ErrorMessage = "El precio del producto no puede ser mayor a 99,00€")]
+    public double ItemPrice { get; set; }
 
 
     /*************************************** Relational fields *************************************/
@@ -1809,7 +1810,7 @@ public class OrderCreateDTO
         
     public int OrderQuantityItems { get; set; }
 
-    public IEnumerable<OrderDetails> OrderDetails { get; set; }
+    public IEnumerable<OrderDetailsCreateDTO> OrderDetailsCreateDTO { get; set; }
 }
 ```
 
@@ -1847,7 +1848,8 @@ public class OrderDetailsCreateDTO
     public string ItemName { get; set; }
 
     [Required]
-    public string ItemPrice { get; set; }
+    [Range(1, 99, ErrorMessage = "El precio del producto no puede ser mayor a 99,00€")]
+    public double ItemPrice { get; set; }
 }
 ```
 
@@ -1912,10 +1914,10 @@ public async Task<ActionResult<ApiResponse>> GetOrders(string? userId)
 }
 ```
 
-### 5.7.1. OrderController.cs --> GetOrder()
+### 5.7.2. OrderController.cs --> GetOrder()
 
 ```csharp
-[HttpGet("{id:int}")] // like this method has a parameter, I need to specify what parameter is (name:type)
+[HttpGet("{orderId:int}")] // like this method has a parameter, I need to specify what parameter is (name:type)
 public async Task<ActionResult<ApiResponse>> GetOrder(int orderId)
 {
     try
@@ -1955,6 +1957,103 @@ public async Task<ActionResult<ApiResponse>> GetOrder(int orderId)
 Estos métodos los probaremos más adelante. 
 De momento vamos a seguir con el controlador, prosiguiendo con el método del CreateOrder(), 
 y una vez que podamos probarlo y crear objetos de Pedido, ya probaremos también los Gets().
+
+### 5.7.3. OrderController.cs --> CreateOrder()
+
+```csharp
+[HttpPost]
+public async Task<ActionResult<ApiResponse>> CreateOrder([FromBody] OrderCreateDTO orderCreateDTO) // with [FromBody] we will get an object of order
+{
+    // the idea is to create a new Order object with the OrderCreateDTO we're receiving as parameter
+    try
+    {
+        // and right here we'll manually convert the DTO to an Order object
+        Order newOrder = new Order();
+        newOrder.ClientId = orderCreateDTO.ClientId;
+        newOrder.ClientEmail = orderCreateDTO.ClientEmail;
+        newOrder.ClientName = orderCreateDTO.ClientName;
+        newOrder.ClientPhone = orderCreateDTO.ClientPhone;
+        newOrder.OrderTotal = orderCreateDTO.OrderTotal;
+        newOrder.OrderDate = DateTime.Now;
+        newOrder.OrderPaymentID = orderCreateDTO.OrderPaymentID;
+        newOrder.OrderQuantityItems = orderCreateDTO.OrderQuantityItems;
+        // now it would be interesting to control the order status, and for that, we have to define more contants and set it here
+        // so when we have to populate the initial status, we have to add a condition here
+        newOrder.OrderStatus = string.IsNullOrEmpty(orderCreateDTO.OrderStatus) // if the user doesn't provide any status
+            ? Constants.STATUS_PENDING      // then we will set the status to be status_pending
+            : orderCreateDTO.OrderStatus;   // else we will set the status to be the status that is passed inside the DTO
+
+        // if the ModelState is valid, let's add this new order to the OrdersDbSet
+        if (ModelState.IsValid)
+        {
+            _dbContext.OrdersDbSet.Add(newOrder);
+            // we need to save changes because in order to create the OrderDetails, we need this new Order id
+            _dbContext.SaveChanges();
+
+            // and once the new order is created, now we can loop through the OrderDetailsCreateDTO
+            foreach (var orderDetailsDTO in orderCreateDTO.OrderDetailsCreateDTO)
+            {
+                // create a new OrderDetails object and let's assign the properties
+                OrderDetails newOrderDetails = new OrderDetails();
+                newOrderDetails.OrderId = newOrder.OrderId;
+                newOrderDetails.ItemName = orderDetailsDTO.ItemName;
+                newOrderDetails.ItemId = orderDetailsDTO.ItemId;
+                newOrderDetails.ItemPrice = orderDetailsDTO.ItemPrice;
+                newOrderDetails.ItemQuantity = orderDetailsDTO.ItemQuantity;
+
+                // adding the newOrderDetails to the OrderDetailsDbSet 
+                _dbContext.OrderDetailsDbSet.Add(newOrderDetails);
+                // but now we don't want to save the changes if there are ten order details...
+            }
+            // ... so let's add them all together in one single call
+            _dbContext.SaveChanges();
+            // if I added this SaveChanges() inside the forEach(), then it will make ten database call for ten separate order details
+            // but if we add them outside of the forEach() loop, it will push them in one single call
+
+            _apiResponse.Result = newOrder;
+            newOrder.OrderDetails = null;
+            _apiResponse.StatusCode = HttpStatusCode.Created;
+
+            return Ok(_apiResponse);
+        }
+    }
+    catch(Exception ex)
+    {
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+    }
+
+    return _apiResponse;
+}
+```
+
+### 5.7.4. Tools --> Constants.cs
+
+Para el CreateOrder() necesitamos setear el estado incial del pedido, y por ello vamos a dejar definidos ya todos los posibles estados de un pedido:
+
+```csharp
+...
+public const string STATUS_PENDING = "Pending";                     // initially the status will be pending
+public const string STATUS_CONFIRMED = "Confirmed";                 // once the payment is done, it will be confirmed
+public const string STATUS_BEING_COOKED = "Being Cooked";           // then when chef is cooking it will be being cook
+public const string STATUS_READY_FOR_PICKUP = "Ready for pickup";   // after it is done, it will be ready for pick up
+public const string STATUS_COMPLETED = "Completed";                 // and once it's picked up it will be completed
+public const string STATUS_CANCELLED = "Cancelled";                 // at any time they can cancel the order and status will be updated to cancelled
+```
+
+## 5.8. Pruebas de Ejecución de los endpoints del Pedido
+
+### 5.8.1. Prueba de crear un pedido
+
+[Prueba de Ejecución del endpoint de CreateOrder([FromBody] OrderCreateDTO orderCreateDTO)](#ordercontrollercs----createorderfrombody-ordercreatedto-ordercreatedto)
+
+### 5.8.2. Prueba de obtener un pedido por su id
+
+[Prueba de Ejecución del endpoint de GetOrder(int orderId)](#ordercontrollercs----getorderint-orderid)
+
+### 5.8.3. Prueba de obtener todos los pedidos de un usuario
+
+[Prueba de Ejecución del endpoint de GetOrders(string? userId)](#ordercontrollercs----getordersstring-userid)
 
 # Webgrafía y Enlaces de Interés
 
@@ -2078,6 +2177,29 @@ y una vez que podamos probarlo y crear objetos de Pedido, ya probaremos también
 ![](./img/64.png)
 ![](./img/65.png)
 ![](./img/66.png)
+
+## OrderController.cs --> CreateOrder([FromBody] OrderCreateDTO orderCreateDTO)
+
+![](./img/69.png)
+![](./img/70.png)
+![](./img/71.png)
+![](./img/72.png)
+
+## OrderController.cs --> GetOrder(int orderId)
+
+![](./img/73.png)
+![](./img/74.png)
+![](./img/75.png)
+![](./img/76.png)
+![](./img/77.png)
+
+## OrderController.cs --> GetOrders(string? userId)
+
+![](./img/78.png)
+![](./img/79.png)
+![](./img/80.png)
+![](./img/81.png)
+![](./img/82.png)
 
 # Extras
 

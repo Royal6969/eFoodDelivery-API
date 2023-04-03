@@ -1,5 +1,8 @@
 ﻿using eFoodDelivery_API.DbContexts;
+using eFoodDelivery_API.DTOs;
+using eFoodDelivery_API.Entities;
 using eFoodDelivery_API.Models;
+using eFoodDelivery_API.Tools;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -61,7 +64,7 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
-        [HttpGet("{id:int}")] // like this method has a parameter, I need to specify what parameter is (name:type)
+        [HttpGet("{orderId:int}")] // like this method has a parameter, I need to specify what parameter is (name:type)
         public async Task<ActionResult<ApiResponse>> GetOrder(int orderId)
         {
             try
@@ -89,6 +92,72 @@ namespace eFoodDelivery_API.Controllers
                 return Ok(_apiResponse);
             }
             catch (Exception ex)
+            {
+                _apiResponse.Success = false;
+                _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+            }
+
+            return _apiResponse;
+        }
+
+
+        [HttpPost]
+        public async Task<ActionResult<ApiResponse>> CreateOrder([FromBody] OrderCreateDTO orderCreateDTO) // with [FromBody] we will get an object of order
+        {
+            // the idea is to create a new Order object with the OrderCreateDTO we're receiving as parameter
+            try
+            {
+                // and right here we'll manually convert the DTO to an Order object
+                Order newOrder = new Order();
+                newOrder.ClientId = orderCreateDTO.ClientId;
+                newOrder.ClientEmail = orderCreateDTO.ClientEmail;
+                newOrder.ClientName = orderCreateDTO.ClientName;
+                newOrder.ClientPhone = orderCreateDTO.ClientPhone;
+                newOrder.OrderTotal = orderCreateDTO.OrderTotal;
+                newOrder.OrderDate = DateTime.Now;
+                newOrder.OrderPaymentID = orderCreateDTO.OrderPaymentID;
+                newOrder.OrderQuantityItems = orderCreateDTO.OrderQuantityItems;
+                // now it would be interesting to control the order status, and for that, we have to define more contants and set it here
+                // so when we have to populate the initial status, we have to add a condition here
+                newOrder.OrderStatus = string.IsNullOrEmpty(orderCreateDTO.OrderStatus) // if the user doesn't provide any status
+                    ? Constants.STATUS_PENDING      // then we will set the status to be status_pending
+                    : orderCreateDTO.OrderStatus;   // else we will set the status to be the status that is passed inside the DTO
+
+                // if the ModelState is valid, let's add this new order to the OrdersDbSet
+                if (ModelState.IsValid)
+                {
+                    _dbContext.OrdersDbSet.Add(newOrder);
+                    // we need to save changes because in order to create the OrderDetails, we need this new Order id
+                    _dbContext.SaveChanges();
+
+                    // and once the new order is created, now we can loop through the OrderDetailsCreateDTO
+                    foreach (var orderDetailsDTO in orderCreateDTO.OrderDetailsCreateDTO)
+                    {
+                        // create a new OrderDetails object and let's assign the properties
+                        OrderDetails newOrderDetails = new OrderDetails();
+                        newOrderDetails.OrderId = newOrder.OrderId;
+                        newOrderDetails.ItemName = orderDetailsDTO.ItemName;
+                        newOrderDetails.ItemId = orderDetailsDTO.ItemId;
+                        newOrderDetails.ItemPrice = orderDetailsDTO.ItemPrice;
+                        newOrderDetails.ItemQuantity = orderDetailsDTO.ItemQuantity;
+
+                        // adding the newOrderDetails to the OrderDetailsDbSet 
+                        _dbContext.OrderDetailsDbSet.Add(newOrderDetails);
+                        // but now we don't want to save the changes if there are ten order details...
+                    }
+                    // ... so let's add them all together in one single call
+                    _dbContext.SaveChanges();
+                    // if I added this SaveChanges() inside the forEach(), then it will make ten database call for ten separate order details
+                    // but if we add them outside of the forEach() loop, it will push them in one single call
+
+                    _apiResponse.Result = newOrder;
+                    newOrder.OrderDetails = null;
+                    _apiResponse.StatusCode = HttpStatusCode.Created;
+
+                    return Ok(_apiResponse);
+                }
+            }
+            catch(Exception ex)
             {
                 _apiResponse.Success = false;
                 _apiResponse.ErrorsList = new List<string>() { ex.ToString() };

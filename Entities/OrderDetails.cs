@@ -54,7 +54,8 @@ namespace eFoodDelivery_API.Entities
         [Required]
         [Column("ItemPrice")]
         [Display(Name = "ItemPrice")]
-        public string ItemPrice { get; set; }
+        [Range(1, 99, ErrorMessage = "El precio del producto no puede ser mayor a 99,00€")]
+        public double ItemPrice { get; set; }
 
 
         /*************************************** Relational fields *************************************/

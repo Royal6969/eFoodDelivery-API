@@ -14,6 +14,7 @@ namespace eFoodDelivery_API.DTOs
         public string ItemName { get; set; }
 
         [Required]
-        public string ItemPrice { get; set; }
+        [Range(1, 99, ErrorMessage = "El precio del producto no puede ser mayor a 99,00€")]
+        public double ItemPrice { get; set; }
     }
 }

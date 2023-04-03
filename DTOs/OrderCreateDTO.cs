@@ -26,6 +26,6 @@ namespace eFoodDelivery_API.DTOs
         
         public int OrderQuantityItems { get; set; }
 
-        public IEnumerable<OrderDetails> OrderDetails { get; set; }
+        public IEnumerable<OrderDetailsCreateDTO> OrderDetailsCreateDTO { get; set; }
     }
 }
