@@ -2041,6 +2041,69 @@ public const string STATUS_COMPLETED = "Completed";                 // and once 
 public const string STATUS_CANCELLED = "Cancelled";                 // at any time they can cancel the order and status will be updated to cancelled
 ```
 
+### 5.7.5. OrderController.cs --> UpdateOrder()
+
+```csharp
+// when we are working with order, we are not updating all the properties, so we have few basic properties that could be updated in OrderUpdateDTO
+[HttpPut("{orderId:int}")]
+public async Task<ActionResult<ApiResponse>> UpdateOrder(int orderId, [FromBody] OrderUpdateDTO orderUpdateDTO)
+{
+    try
+    {
+        // if the orderUpdateDTO is null or if the orderId doesn't match with the parameter
+        if (orderUpdateDTO == null || orderId != orderUpdateDTO.OrderId)
+        {
+            _apiResponse.Success = false;
+            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                    
+            return BadRequest();
+        }
+
+        // then we will retrieve from the DB the order based on the orderId
+        Order orderRetrievedFromDb = _dbContext.OrdersDbSet.FirstOrDefault(order => order.OrderId == orderId);
+
+        // once we retrieve that, if that is null, we can return again a bad request
+        if (orderRetrievedFromDb == null)
+        {
+            _apiResponse.Success = false;
+            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                    
+            return BadRequest();
+        }
+
+        // then we will check individual property, if they are null, then we will not update them
+        if (!string.IsNullOrEmpty(orderUpdateDTO.ClientName))
+            orderRetrievedFromDb.ClientName = orderUpdateDTO.ClientName;
+
+        if (!string.IsNullOrEmpty(orderUpdateDTO.ClientPhone))
+            orderRetrievedFromDb.ClientPhone = orderUpdateDTO.ClientPhone;
+
+        if (!string.IsNullOrEmpty(orderUpdateDTO.ClientEmail))
+            orderRetrievedFromDb.ClientEmail = orderUpdateDTO.ClientEmail;
+
+        if (!string.IsNullOrEmpty(orderUpdateDTO.OrderPaymentID))
+            orderRetrievedFromDb.OrderPaymentID = orderUpdateDTO.OrderPaymentID;
+
+        if (!string.IsNullOrEmpty(orderUpdateDTO.OrderStatus))
+            orderRetrievedFromDb.OrderStatus = orderUpdateDTO.OrderStatus;
+
+        // finally, we need to save the changes
+        _dbContext.SaveChanges();
+        _apiResponse.StatusCode = HttpStatusCode.NoContent;
+        _apiResponse.Success = true;
+
+        return Ok(_apiResponse);
+    }
+    catch (Exception ex)
+    {
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+    }
+
+    return _apiResponse;
+}
+```
+
 ## 5.8. Pruebas de Ejecución de los endpoints del Pedido
 
 ### 5.8.1. Prueba de crear un pedido
@@ -2054,6 +2117,10 @@ public const string STATUS_CANCELLED = "Cancelled";                 // at any ti
 ### 5.8.3. Prueba de obtener todos los pedidos de un usuario
 
 [Prueba de Ejecución del endpoint de GetOrders(string? userId)](#ordercontrollercs----getordersstring-userid)
+
+### 5.8.4. Prueba de actualizar un pedido
+
+[Prueba de Ejecución del endpoint de UpdateOrder(int orderId, [FromBody] OrderUpdateDTO orderUpdateDTO)](#ordercontrollercs----updateorderint-orderid-frombody-orderupdatedto-orderupdatedto)
 
 # Webgrafía y Enlaces de Interés
 
@@ -2200,6 +2267,13 @@ public const string STATUS_CANCELLED = "Cancelled";                 // at any ti
 ![](./img/80.png)
 ![](./img/81.png)
 ![](./img/82.png)
+
+## OrderController.cs --> UpdateOrder(int orderId, [FromBody] OrderUpdateDTO orderUpdateDTO)
+
+![](./img/83.png)
+![](./img/84.png)
+![](./img/85.png)
+![](./img/86.png)
 
 # Extras
 

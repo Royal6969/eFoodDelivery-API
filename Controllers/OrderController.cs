@@ -165,5 +165,65 @@ namespace eFoodDelivery_API.Controllers
 
             return _apiResponse;
         }
+
+
+        // when we are working with order, we are not updating all the properties, so we have few basic properties that could be updated in OrderUpdateDTO
+        [HttpPut("{orderId:int}")]
+        public async Task<ActionResult<ApiResponse>> UpdateOrder(int orderId, [FromBody] OrderUpdateDTO orderUpdateDTO)
+        {
+            try
+            {
+                // if the orderUpdateDTO is null or if the orderId doesn't match with the parameter
+                if (orderUpdateDTO == null || orderId != orderUpdateDTO.OrderId)
+                {
+                    _apiResponse.Success = false;
+                    _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                    
+                    return BadRequest();
+                }
+
+                // then we will retrieve from the DB the order based on the orderId
+                Order orderRetrievedFromDb = _dbContext.OrdersDbSet.FirstOrDefault(order => order.OrderId == orderId);
+
+                // once we retrieve that, if that is null, we can return again a bad request
+                if (orderRetrievedFromDb == null)
+                {
+                    _apiResponse.Success = false;
+                    _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                    
+                    return BadRequest();
+                }
+
+                // then we will check individual property, if they are null, then we will not update them
+                if (!string.IsNullOrEmpty(orderUpdateDTO.ClientName))
+                    orderRetrievedFromDb.ClientName = orderUpdateDTO.ClientName;
+
+                if (!string.IsNullOrEmpty(orderUpdateDTO.ClientPhone))
+                    orderRetrievedFromDb.ClientPhone = orderUpdateDTO.ClientPhone;
+
+                if (!string.IsNullOrEmpty(orderUpdateDTO.ClientEmail))
+                    orderRetrievedFromDb.ClientEmail = orderUpdateDTO.ClientEmail;
+
+                if (!string.IsNullOrEmpty(orderUpdateDTO.OrderPaymentID))
+                    orderRetrievedFromDb.OrderPaymentID = orderUpdateDTO.OrderPaymentID;
+
+                if (!string.IsNullOrEmpty(orderUpdateDTO.OrderStatus))
+                    orderRetrievedFromDb.OrderStatus = orderUpdateDTO.OrderStatus;
+
+                // finally, we need to save the changes
+                _dbContext.SaveChanges();
+                _apiResponse.StatusCode = HttpStatusCode.NoContent;
+                _apiResponse.Success = true;
+
+                return Ok(_apiResponse);
+            }
+            catch (Exception ex)
+            {
+                _apiResponse.Success = false;
+                _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+            }
+
+            return _apiResponse;
+        }
     }
 }
