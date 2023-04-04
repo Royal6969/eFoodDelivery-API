@@ -19,7 +19,7 @@ namespace eFoodDelivery_API.Controllers
         // dependencies to inject
         private readonly ApplicationDbContext _dbContext; // read property for our context
         private readonly IBlobService _blobService; // read property to CreateProduct() and UpdateProduct()
-        private ApiResponse _apiResponse; // property for our API response
+        protected ApiResponse _apiResponse; // property for our API response
 
         // dependency injection
         public ProductController(ApplicationDbContext dbContext, IBlobService blobService) // dependency injection

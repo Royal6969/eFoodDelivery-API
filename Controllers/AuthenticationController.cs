@@ -20,7 +20,7 @@ namespace eFoodDelivery_API.Controllers
     {
         // dependencies to inject 
         private readonly ApplicationDbContext _dbContext;
-        private ApiResponse _apiResponse;
+        protected ApiResponse _apiResponse;
         private string _JWTsecretKey;
         private readonly UserManager<ApplicationUser> _userManager; // Identity helper method
         private readonly RoleManager<IdentityRole> _roleManager;    // Identity helper methods

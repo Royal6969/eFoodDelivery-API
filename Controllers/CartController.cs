@@ -31,27 +31,30 @@ namespace eFoodDelivery_API.Controllers
         {
             try
             {
+                Cart cartRetrievedFromDb = new Cart();
+
                 if (userId == null) // we can also say ... if (string.IsNullOrEmpty(userId))
                 {
-                    _apiResponse.Success = false;
-                    _apiResponse.StatusCode = HttpStatusCode.BadRequest;
-
-                    return BadRequest(_apiResponse);
+                    // if userId is empty or null, we will return an empty shopping cart
+                    Cart newCartEmpty = new Cart();
                 }
-
-                // if the userId is not null, then we want to retrieve the cart
-                Cart cartRetrievedFromDb = _dbContext.CartDbSet
-                    // we also want to include cart items
-                    .Include(cart => cart.CartItemsList)
-                    // including the product, if the user wants to display what is the product name, they can do it
-                    // but we have to use ThenInclude() this time because inside cart we only have CartItemsList,
-                    // and in CartItem we want to include the Product... so it is the parent, child and the grandchild
-                    // so if there were two things that we want to include in cart, then we can use another Include() statement here and add that
-                    // but we want to include something that is inside the CartItemList
-                    .ThenInclude(product => product.Product)
-                    // we dont't have to pass anything here because cart is always one per userId, but in any case, let's write the condition
-                    .FirstOrDefault(user => user.UserId == userId)
-                ;
+                else // or else we will return a populated shopping cart right here
+                {
+                    // if the userId is not null, then we want to retrieve the cart
+                    cartRetrievedFromDb = _dbContext.CartDbSet
+                        // we also want to include cart items
+                        .Include(cartItems => cartItems.CartItemsList)
+                        // including the product, if the user wants to display what is the product name, they can do it
+                        // but we have to use ThenInclude() this time because inside cart we only have CartItemsList,
+                        // and in CartItem we want to include the Product... so it is the parent, child and the grandchild
+                        // so if there were two things that we want to include in cart, then we can use another Include() statement here and add that
+                        // but we want to include something that is inside the CartItemList
+                        .ThenInclude(product => product.Product)
+                        // we dont't have to pass anything here because cart is always one per userId, but in any case, let's write the condition
+                        .FirstOrDefault(user => user.UserId == userId)
+                    ;
+                }
+                
 
                 // calculate the total amount of the cart
                 if (cartRetrievedFromDb.CartItemsList != null && cartRetrievedFromDb.CartItemsList.Count() > 0)

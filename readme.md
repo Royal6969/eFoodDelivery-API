@@ -1556,27 +1556,29 @@ public async Task<ActionResult<ApiResponse>> GetCart(string userId)
 {
     try
     {
+        Cart cartRetrievedFromDb = new Cart();
+
         if (userId == null) // we can also say ... if (string.IsNullOrEmpty(userId))
         {
-            _apiResponse.Success = false;
-            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
-
-            return BadRequest(_apiResponse);
+            // if userId is empty or null, we will return an empty shopping cart
+            Cart newCartEmpty = new Cart();
         }
-
-        // if the userId is not null, then we want to retrieve the cart
-        Cart cartRetrievedFromDb = _dbContext.CartDbSet
-            // we also want to include cart items
-            .Include(cart => cart.CartItemsList)
-            // including the product, if the user wants to display what is the product name, they can do it
-            // but we have to use ThenInclude() this time because inside cart we only have CartItemsList,
-            // and in CartItem we want to include the Product... so it is the parent, child and the grandchild
-            // so if there were two things that we want to include in cart, then we can use another Include() statement here and add that
-            // but we want to include something that is inside the CartItemList
-            .ThenInclude(product => product.Product)
-            // we dont't have to pass anything here because cart is always one per userId, but in any case, let's write the condition
-            .FirstOrDefault(user => user.UserId == userId)
-        ;
+        else // or else we will return a populated shopping cart right here
+        {
+            // if the userId is not null, then we want to retrieve the cart
+            cartRetrievedFromDb = _dbContext.CartDbSet
+                // we also want to include cart items
+                .Include(cartItems => cartItems.CartItemsList)
+                // including the product, if the user wants to display what is the product name, they can do it
+                // but we have to use ThenInclude() this time because inside cart we only have CartItemsList,
+                // and in CartItem we want to include the Product... so it is the parent, child and the grandchild
+                // so if there were two things that we want to include in cart, then we can use another Include() statement here and add that
+                // but we want to include something that is inside the CartItemList
+                .ThenInclude(product => product.Product)
+                // we dont't have to pass anything here because cart is always one per userId, but in any case, let's write the condition
+                .FirstOrDefault(user => user.UserId == userId)
+            ;
+        }
 
         // calculate the total amount of the cart
         if (cartRetrievedFromDb.CartItemsList != null && cartRetrievedFromDb.CartItemsList.Count() > 0)
@@ -2122,6 +2124,165 @@ public async Task<ActionResult<ApiResponse>> UpdateOrder(int orderId, [FromBody]
 
 [Prueba de Ejecución del endpoint de UpdateOrder(int orderId, [FromBody] OrderUpdateDTO orderUpdateDTO)](#ordercontrollercs----updateorderint-orderid-frombody-orderupdatedto-orderupdatedto)
 
+# 6. Forma de Pago
+
+Hasta este punto, hemos completado los CRUDs de las principales entidades que comforman este proyecto, pero aún nos sigue quedando pendiente un último punto... ¡el método y proceso de pago!
+
+El método de pago que vamos a utilizar en un principio, será el de Stripe... aunque más adelante valoraré la posibilidad de integrar PayPal también.
+
+Vamos a Google para hacer una búsqueda escribiendo "payment intent stripe", y [entramos en la documentación](https://stripe.com/docs/api/payment_intents/create?lang=dotnet).
+
+Pero, ¿dónde tenemos que tener la creación del *PaymentIntent*?
+En la documentación, podemos ver a la derecha un ejemplo de POST para .NET
+
+```csharp
+StripeConfiguration.ApiKey = "sk_test_4eC39HqLyjWDarjtT1zdp7dc";
+
+var options = new PaymentIntentCreateOptions
+{
+    Amount = 2000,
+    Currency = "usd",
+    AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
+    {
+        Enabled = true,
+    },
+};
+var service = new PaymentIntentService();
+service.Create(options);
+```
+
+Tenemos que generar una *ApiKey* y establecer varias opciones, y entonces podremos llamar al servicio de creación. Ello creará el *Payment Intent* y lo devolverá, y eso es lo que tendremos que devolver como respuesta cuando el endpoint de este método de pago sea invocado.
+
+Lo único con lo que tenemos que tener cuidado, es con el carrito, concretamente con su precio total, que obviamente se tendrá que tener en cuenta a la hora de crear el *Payment Intent*.
+
+Por lo tanto, cuando pasemos el *Payment Intent* a la vista, ello cogerá el Id del carrito en cuestión para crear la orden de pago.
+
+Si el pago se completa con éxito, el estado del *Payment Intent* será actualizado a *succeeded*. Y en resumidas palabras, así sería cómo funcionan el *Payment Intent* y el Stripe.
+
+Para llevar a cabo toda esta integración, vamos a hacer el último endpoint en nuestra API.
+
+## 6.1. API Secret Key
+
+Lo primero de todo para empezar, es conseguir nuestra propia *API secret key*, y para ello tenemos que ir a la web de Stripe para [crear una cuenta](https://dashboard.stripe.com/register).
+
+[¿Cómo conseguir tu API Secret Key en Stripe](#4-obtener-una-nueva-clave-secreta-api-en-stripe)
+
+## 6.2. appsettings.json
+
+Una vez tengamos ya nuestra clave secreta API de Stripe, podemos definirla en el *appsettings.json* para posteriormente usarla en el futuro con el *IConfiguration* en el controlador API que vayamos a crear para nuestros métodos de pago que podamos ir integrando
+
+```json
+"StripeSecrets": {
+    "StripeKey": "PegaAquíTuClaveSecretaAPIdeStripe"
+}
+```
+
+## 6.3. Buscar e Instalar el paquete Nuget
+
+Mediante las *Herramientas* --> *Administrador de paquetes Nugets* --> *Administrar paquetes Nugets para solución...*
+
+Buscamos e instalamos el siguiente paquete:
+
+- Stripe.net (yo voy a instalar y usar la versión 41.2.0)
+
+## 6.4. Controllers --> PaymentController.cs
+
+```csharp
+// [Route("api/[controller]")] // instead a dynamic route, if I change the controller name, the route does not get updated
+[Route("api/Payment")]
+[ApiController]
+public class PaymentController : ControllerBase
+{
+    // dependencies to inject
+    protected ApiResponse _apiResponse;
+    private readonly IConfiguration _configuration; // with IConfiguration we will be able to access to our appsettings.json and use our Stripe API Secret Key defined there
+    private readonly ApplicationDbContext _dbContext;
+
+    // dependency injection
+    public PaymentController(IConfiguration configuration, ApplicationDbContext dbContext)
+    {
+        _configuration = configuration;
+        _dbContext = dbContext;
+        _apiResponse = new ApiResponse();
+    }    
+}
+```
+
+### 6.4.1. PaymentController.cs --> OrderPayment()
+
+```csharp
+// when we're making a payment, we will require the user id because based on that user id, we will generate a payment intent
+// because from their shopping cart we need to find out what is their order total price
+[HttpPost]
+public async Task<ActionResult<ApiResponse>> OrderPayment(string userId)
+{
+    // first we need to retrieve their shopping cart
+    Cart cartRetrievedFromDb = _dbContext.CartDbSet
+        // we will include the cart items as well as the product, because we need to calculate the order total price
+        .Include(cartItems => cartItems.CartItemsList)
+        .ThenInclude(product => product.Product)
+        .FirstOrDefault(user => user.UserId == userId)
+    ;
+
+    if (cartRetrievedFromDb == null || cartRetrievedFromDb.CartItemsList == null || cartRetrievedFromDb.CartItemsList.Count() == 0)
+    {
+        _apiResponse.Success = false;
+        _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+
+        return BadRequest(_apiResponse);
+    }
+
+    /********************************** Create Payment Intent for Stripe ************************************/
+    // so the last piece that remains here is creating the payment intent based on the user id and their shopping cart total price
+    // the final piece of the puzzle is to create a payment intent for Stripe
+    // to start, just copy and paste here the dummy code from the Stripe API documentation
+            
+    // for the Stripe configuration, we will add the using statement of Stripe and we use the secret key that we have in _configuration dependency
+    StripeConfiguration.ApiKey = _configuration["StripeSecrets:StripeKey"];
+
+    // then, we need the cart total price
+    cartRetrievedFromDb.Total = cartRetrievedFromDb.CartItemsList.Sum(cartItem => cartItem.Quantity * cartItem.Product.Price);
+
+    PaymentIntentCreateOptions paymentIntentCreateOptions = new PaymentIntentCreateOptions
+    {
+        // the amount here is an integer and a long field, so we have to multiply it by 100 to make it long
+        Amount = (int)(cartRetrievedFromDb.Total * 100), // basically we need the value in cents and not in euros
+        Currency = "EUR",
+    /*
+        AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
+        {
+            Enabled = true,
+        },
+    */
+        PaymentMethodTypes = new List<string>
+        {
+            "card"
+        }
+    };
+
+    PaymentIntentService paymentIntentService = new PaymentIntentService();
+            
+    // let's wait for the response here
+    PaymentIntent paymentIntentResponse = paymentIntentService.Create(paymentIntentCreateOptions);  // if you examen the type of var service, note it's of the type payment intent
+
+    // finally, in our shopping cart, we have the Stripe payment intended
+    cartRetrievedFromDb.PaymentAttempId = paymentIntentResponse.Id; // because that is the payment intent itself
+
+    // and we also added a not mapped property for client secret
+    cartRetrievedFromDb.ClientSecret = paymentIntentResponse.ClientSecret; // this client secret is what we'll use to make the actual payment later
+    /********************************************************************************************************/
+
+    _apiResponse.Result = cartRetrievedFromDb;
+    _apiResponse.StatusCode = HttpStatusCode.OK;
+
+    return Ok(_apiResponse);
+}
+```
+
+## 6.5 Prueba de Ejecución
+
+[Prueba de Ejecución de crear un PaymentIntent de Stripe](#paymentcontrollercs----orderpaymentstring-userid)
+
 # Webgrafía y Enlaces de Interés
 
 ### 1. [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
@@ -2157,6 +2318,16 @@ public async Task<ActionResult<ApiResponse>> UpdateOrder(int orderId, [FromBody]
 ### 16. [ShoppingCartService Explanation](https://code-maze.com/unit-testing-aspnetcore-web-api/)
 
 ### 17. [ASP.NET Core Blazor: Creating Shopping Cart with EF and Web API](https://social.technet.microsoft.com/wiki/contents/articles/51755.asp-net-core-blazor-creating-shopping-cart-with-ef-and-web-api.aspx)
+
+### 18. [Stripe API - Create a PaymentIntent object](https://stripe.com/docs/api/payment_intents/create?lang=dotnet)
+
+### 19. [Accept a payment - Create a PaymentIntent with .NET](https://www.youtube.com/watch?v=mqEjRgoZWdo)
+
+## Inteligencias Artificiales usadas como ayuda y orientación
+
+### 1. [OpenAI --> ChatGPT](https://chat.openai.com/chat)
+
+### 2. [Visual Studio Extension --> GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilotvs)
 
 # Pruebas de Ejecución
 
@@ -2275,6 +2446,34 @@ public async Task<ActionResult<ApiResponse>> UpdateOrder(int orderId, [FromBody]
 ![](./img/85.png)
 ![](./img/86.png)
 
+## PaymentController.cs --> OrderPayment(string userId)
+
+Partimos de la base de que tenemos un par de carritos (Cart) en la BBDD (uno del usuario cliente de prueba y otro del usuario administrador de prueba) y están llenos de productos (CartItems)
+
+![](./img/87.png)
+![](./img/88.png)
+![](./img/89.png)
+![](./img/90.png)
+![](./img/91.png)
+![](./img/92.png)
+![](./img/93.png)
+![](./img/94.png)
+![](./img/95.png)
+
+Como se puede apreciar, el PaymentIntent ha sido generado, y podemos verlo en la sección de *Pagos* de nuestra cuenta en Stripe. 
+
+Pero este pago está *incompleto* porque el cliente no ha introducido aún ningún método de pago.
+
+Aunque esto es algo por lo que no me voy a preocupar ahora mismo, porque por el momento me vale con que mi API debe ser únicamente responsable al generar el PaymentIntent y enviarlo de vuelta como respuesta.
+
+Si queremos profundizar más allá en el análisis de este PaymentIntent, si clickamos sobre él, se nos despliega un resumen de información más específica, y si hacemos un poco de *scroll down* podemos llegar a ver la respuesta completa en formato json línea a línea.
+
+![](./img/96.png)
+![](./img/97.png)
+![](./img/98.png)
+
+Podemos ver que el *client_secret* de la respuesta en Stripe coincide con el que nos devolvía también en el Swagger de nuestra API.
+
 # Extras
 
 ## 1. Crear la BBDD en Azure
@@ -2357,3 +2556,11 @@ Pero si en cambio lo que queremos es eliminar directamente la última migración
 ```bash
 remove-migration
 ```
+
+# 4. Obtener una nueva Clave Secreta API en Stripe
+
+![](./img/StripeSecretKey/1.png)
+![](./img/StripeSecretKey/2.png)
+![](./img/StripeSecretKey/3.png)
+![](./img/StripeSecretKey/4.png)
+![](./img/StripeSecretKey/5.png)
