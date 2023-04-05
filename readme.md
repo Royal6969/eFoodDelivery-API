@@ -167,7 +167,9 @@
     - [DbContexts --\> UserEntityConfiguration.cs](#dbcontexts----userentityconfigurationcs)
     - [DbContexts --\> ApplicationDbContext.cs](#dbcontexts----applicationdbcontextcs)
     - [Creamos una nueva migración y la pusheamos a la BBDD](#creamos-una-nueva-migración-y-la-pusheamos-a-la-bbdd)
-- [4. Obtener una nueva Clave Secreta API en Stripe](#4-obtener-una-nueva-clave-secreta-api-en-stripe)
+  - [4. Obtener una nueva Clave Secreta API en Stripe](#4-obtener-una-nueva-clave-secreta-api-en-stripe)
+  - [5. Enlace al espacio de trabajo y al tablero del proyecto en Trello](#5-enlace-al-espacio-de-trabajo-y-al-tablero-del-proyecto-en-trello)
+  - [6. Diagrama de Gantt del proyecto API](#6-diagrama-de-gantt-del-proyecto-api)
 
 
 ## 0.0 Crear el proyecto web API en Visual Studio 2022
@@ -2820,10 +2822,18 @@ Pero si en cambio lo que queremos es eliminar directamente la última migración
 remove-migration
 ```
 
-# 4. Obtener una nueva Clave Secreta API en Stripe
+## 4. Obtener una nueva Clave Secreta API en Stripe
 
 ![](./img/StripeSecretKey/1.png)
 ![](./img/StripeSecretKey/2.png)
 ![](./img/StripeSecretKey/3.png)
 ![](./img/StripeSecretKey/4.png)
 ![](./img/StripeSecretKey/5.png)
+
+## 5. Enlace al espacio de trabajo y al tablero del proyecto en Trello
+
+[Enlace a Trello - Espacio de Trabajo y Tablero del proyecto eFoodDelivery-API](https://trello.com/invite/b/zKAYLKfs/ATTIcaa8e34fc79debfff441e0330b4e99f41A2260A8/efooddelivery-api)
+
+## 6. Diagrama de Gantt del proyecto API
+
+[Estimación de los tiempos para completar las tareas de los diferentes sprints del proyecto](./eFoodDelivery-API---Gantt-Project-Chart.pdf)
