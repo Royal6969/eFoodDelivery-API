@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Este archivo se usa en el proceso de publicación y empaquetado del proyecto web. Para personalizar el comportamiento de este proceso,
+edite el archivo MSBuild. Visite https://go.microsoft.com/fwlink/?LinkID=208121 para obtener más información. 
+-->
+<Project>
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <EncryptedPassword>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAdRNmVv1jrk6E0KUj1yXg3AAAAAACAAAAAAAQZgAAAAEAACAAAACrkELg0WoL5mf8+4UthkLj41FyqQA67+u2jB7dJfPGEwAAAAAOgAAAAAIAACAAAABrFWdXTfcJcD9NCI2+w4ImhTostp0pHfss5PeZq18aC4AAAADabscTv503qcVjCmh/aCvy4Ql0PYjNQNgGmIjglnTph1ms41DADtXzavZ5EGTHxBydX/92UeY48kkc+72JgqeedmIIzO5Xi1npyBbHomMkUzUBIxl8wOTC41ZZQgjDUBVNhWRi7U6NxEZ47d1qBPtojsYHe33QI+QFiNIlvoicsEAAAABkwMBqBwOjQi9/bhtamW1N5kyuUQp3jO6CLRMkiKXWFGSrue1ioYQ9qxVY05cxec/WnAhqQ20Qwc6cHPOublZe</EncryptedPassword>
+  </PropertyGroup>
+  <ItemGroup>
+    <DestinationConnectionStrings Include="AzureDbConnection">
+      <Value>Server=tcp:efooddelivery-db.database.windows.net,1433%3bInitial Catalog=eFoodDelivery-API%3bPersist Security Info=False%3bUser ID=sqladmin%3bPassword=123Abc!!!%3bMultipleActiveResultSets=False%3bEncrypt=True%3bTrustServerCertificate=False%3bConnection Timeout=30%3b</Value>
+    </DestinationConnectionStrings>
+  </ItemGroup>
+</Project>

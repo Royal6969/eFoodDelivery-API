@@ -23,7 +23,8 @@ builder.Services.AddControllers();
 // Add connection strings for DbContexts
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServerConnection"));
+    // options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServerConnection"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("AzureDbConnection"));
 });
 
 // Add Identity
@@ -120,10 +121,22 @@ builder.Services.AddSwaggerGen(options => // here we can configure options on Sw
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseSwagger();
+
+// after our first deployment, we have to extrac the app.UseSwagger() method ...
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
+    // app.UseSwagger();
     app.UseSwaggerUI();
+}
+// ... and set two parameters for app.UseSwaggerUI() when the enviroment is not in development mode
+else
+{
+    app.UseSwaggerUI(swagger =>
+    {
+        swagger.SwaggerEndpoint("/swagger/v1/swagger.json", "eFoodDelivery - Web Deploy 1");
+        swagger.RoutePrefix = string.Empty;
+    });
 }
 
 app.UseHttpsRedirection();

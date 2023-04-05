@@ -1,5 +1,175 @@
 # eFoodDelivery Website - Trabajo de Fin de Grado
 
+- [eFoodDelivery Website - Trabajo de Fin de Grado](#efooddelivery-website---trabajo-de-fin-de-grado)
+  - [0.0 Crear el proyecto web API en Visual Studio 2022](#00-crear-el-proyecto-web-api-en-visual-studio-2022)
+  - [0.1. Instalar los paquetes NuGets](#01-instalar-los-paquetes-nugets)
+  - [0.2. Ejecución inicial de prueba](#02-ejecución-inicial-de-prueba)
+- [1. Conexión con BBDD](#1-conexión-con-bbdd)
+  - [1.1. Conexión con SqlServer](#11-conexión-con-sqlserver)
+    - [1.1.1. Configurar la conexión con la BBDD](#111-configurar-la-conexión-con-la-bbdd)
+    - [1.1.2. DbContexts --\> ApplicationDbContext.cs](#112-dbcontexts----applicationdbcontextcs)
+    - [1.1.3. Añadir el servicio de conexión al Program.cs](#113-añadir-el-servicio-de-conexión-al-programcs)
+    - [1.1.4. Realizamos la primera migración a BBDD](#114-realizamos-la-primera-migración-a-bbdd)
+  - [1.2. Conexión con AzureSQL](#12-conexión-con-azuresql)
+    - [1.2.1. Crear el server y la BBDD](#121-crear-el-server-y-la-bbdd)
+    - [1.2.2. Nueva cadena de conexión](#122-nueva-cadena-de-conexión)
+    - [1.2.3. ReMigramos las tablas de Identity](#123-remigramos-las-tablas-de-identity)
+  - [1.3. Añadir campos a la tabla AspNetUsers y cambiar los nombres de las tablas](#13-añadir-campos-a-la-tabla-aspnetusers-y-cambiar-los-nombres-de-las-tablas)
+    - [1.3.1. Models --\> ApplicationUser.cs](#131-models----applicationusercs)
+    - [1.3.2. Actualizar el Program.cs](#132-actualizar-el-programcs)
+    - [1.3.3. DbContexts --\> UserEntityConfiguration.cs](#133-dbcontexts----userentityconfigurationcs)
+    - [1.3.4. DbContexts --\> ApplicationDbContext.cs](#134-dbcontexts----applicationdbcontextcs)
+    - [1.3.5. Nueva migración](#135-nueva-migración)
+    - [1.3.6. Cambiar los nombres por defecto de las tablas de Identity](#136-cambiar-los-nombres-por-defecto-de-las-tablas-de-identity)
+  - [1.4. Product entity](#14-product-entity)
+    - [1.4.1. Entities --\> Product.cs](#141-entities----productcs)
+    - [1.4.2. DbContexts --\> sqlServerContext.cs](#142-dbcontexts----sqlservercontextcs)
+    - [1.4.3. Creamos una nueva migración y pusheamos a la BBDD](#143-creamos-una-nueva-migración-y-pusheamos-a-la-bbdd)
+  - [1.5 Añadir productos a la BBDD](#15-añadir-productos-a-la-bbdd)
+    - [1.5.1. DbContexts --\> ApplicationDbContext.cs](#151-dbcontexts----applicationdbcontextcs)
+    - [1.5.2. Nueva migración y a la pushear a la BBDD](#152-nueva-migración-y-a-la-pushear-a-la-bbdd)
+- [2. Controlador del producto](#2-controlador-del-producto)
+  - [2.1. GetProducts()](#21-getproducts)
+    - [2.1.1. Models --\> ApiResponse.cs](#211-models----apiresponsecs)
+  - [2.1.2. ProductController.cs --\> GetProducts()](#212-productcontrollercs----getproducts)
+  - [2.1.3. Prueba de ejecución](#213-prueba-de-ejecución)
+  - [2.2. GetProduct(int id)](#22-getproductint-id)
+    - [2.2.1. ProductController.cs --\> GetProduct(int id)](#221-productcontrollercs----getproductint-id)
+  - [2.2.2. Prueba de ejecución](#222-prueba-de-ejecución)
+  - [2.3. Gestión de imágenes](#23-gestión-de-imágenes)
+    - [2.3.1. Services --\> Interfaces --\> IBlobService.cs](#231-services----interfaces----iblobservicecs)
+    - [2.3.2. Services --\> Implementations --\> BlobService.cs](#232-services----implementations----blobservicecs)
+    - [2.3.3. appsettings.json](#233-appsettingsjson)
+    - [2.3.4. Añadir los servicios Blob en el Program.cs](#234-añadir-los-servicios-blob-en-el-programcs)
+    - [2.3.5. Desarrollo de los métodos de implementación del BlobService](#235-desarrollo-de-los-métodos-de-implementación-del-blobservice)
+  - [2.4. CreateProduct(\[FromForm\] ProductCreateDTO productCreateDTO)](#24-createproductfromform-productcreatedto-productcreatedto)
+    - [2.4.1. DTOs --\> ProductCreateDTO.cs](#241-dtos----productcreatedtocs)
+    - [2.4.2. Tools --\> Constants.cs](#242-tools----constantscs)
+    - [2.4.3. ProductController.cs --\> CreateProduct()](#243-productcontrollercs----createproduct)
+    - [2.4.5. Modificando la etiqueta de la cabecera del método GetProduct()](#245-modificando-la-etiqueta-de-la-cabecera-del-método-getproduct)
+    - [2.4.6. Prueba de ejecución](#246-prueba-de-ejecución)
+  - [2.5. UpdateProduct(int id, \[FromForm\] ProductUpdateDTO productUpdateDTO)](#25-updateproductint-id-fromform-productupdatedto-productupdatedto)
+    - [2.5.1. DTOs --\> ProductUpdateDTO.cs](#251-dtos----productupdatedtocs)
+    - [2.5.2. ProductController.cs --\> UpdateProduct()](#252-productcontrollercs----updateproduct)
+    - [2.5.3. Prueba de Ejecución](#253-prueba-de-ejecución)
+  - [2.6. DeleteProduct(int id)](#26-deleteproductint-id)
+    - [2.6.1. ProductController.cs --\> DeleteProduct()](#261-productcontrollercs----deleteproduct)
+    - [2.6.2. Prueba de Ejecución](#262-prueba-de-ejecución)
+- [3. Autentificación y Autorización](#3-autentificación-y-autorización)
+  - [3.1. Login y Register DTOs](#31-login-y-register-dtos)
+    - [3.1.1. DTOs --\> LoginRequestDTO.cs](#311-dtos----loginrequestdtocs)
+    - [3.1.2. DTOs --\> LoginResponseDTO.cs](#312-dtos----loginresponsedtocs)
+    - [3.1.3. DTOs --\> RegisterRequestDTO.cs](#313-dtos----registerrequestdtocs)
+    - [3.1.4. Tools --\> Constants.cs](#314-tools----constantscs)
+  - [3.2. Controllers --\> AuthenticationController.cs (Register)](#32-controllers----authenticationcontrollercs-register)
+    - [3.2.1. Injección inicial de dependecias](#321-injección-inicial-de-dependecias)
+    - [3.2.2. appsettings.json --\> JWTsecret](#322-appsettingsjson----jwtsecret)
+    - [3.2.3. AuthenticationController.cs --\> Register(\[FromBody\] RegisterRequestDTO registerRequestDTO)](#323-authenticationcontrollercs----registerfrombody-registerrequestdto-registerrequestdto)
+    - [3.2.4. Desactivar en el Program.cs durante el desarrollo del proyecto las comprobaciones de Identity en el registro](#324-desactivar-en-el-programcs-durante-el-desarrollo-del-proyecto-las-comprobaciones-de-identity-en-el-registro)
+    - [3.2.5. Prueba de Ejecución](#325-prueba-de-ejecución)
+  - [3.3. Login with JWT](#33-login-with-jwt)
+    - [3.3.1. AuthenticationController.cs --\> Login()](#331-authenticationcontrollercs----login)
+    - [3.3.2. appsettings.json --\> JWT string secret](#332-appsettingsjson----jwt-string-secret)
+    - [3.3.3. Prueba de Ejecución](#333-prueba-de-ejecución)
+  - [3.4. Usar el JWT para la Autentificación y la Autorización del usuario](#34-usar-el-jwt-para-la-autentificación-y-la-autorización-del-usuario)
+    - [3.4.1. AuthenticationTestController.cs --\> GetAuthentication()](#341-authenticationtestcontrollercs----getauthentication)
+    - [3.4.2. AuthenticationTestController.cs --\> GetAuthorization(int id)](#342-authenticationtestcontrollercs----getauthorizationint-id)
+    - [3.4.3. Configurar la Autentificación en el Program.cs](#343-configurar-la-autentificación-en-el-programcs)
+  - [3.5. Añadiendo seguridad a Swagger](#35-añadiendo-seguridad-a-swagger)
+- [4. Cart y CartItem](#4-cart-y-cartitem)
+  - [4.1. Entities --\> Cart.cs](#41-entities----cartcs)
+  - [4.2. Entities --\> CartItem.cs](#42-entities----cartitemcs)
+  - [4.3. DbContexts --\> ApplicationDbContext.cs](#43-dbcontexts----applicationdbcontextcs)
+  - [4.4. Migrar a la BBDD las nuevas entidades](#44-migrar-a-la-bbdd-las-nuevas-entidades)
+  - [4.5. Autogenerar un diagrama relacional de la BBDD](#45-autogenerar-un-diagrama-relacional-de-la-bbdd)
+  - [4.6. Controllers --\> CartController.cs](#46-controllers----cartcontrollercs)
+  - [4.7. CartController.cs --\> AddOrUpdateCartItem()](#47-cartcontrollercs----addorupdatecartitem)
+  - [4.8. Pruebas de Ejecución del Carrito](#48-pruebas-de-ejecución-del-carrito)
+  - [4.9. CartController.cs --\> GetCart()](#49-cartcontrollercs----getcart)
+  - [4.10. Prueba de Ejecución de la obtención del Carrito](#410-prueba-de-ejecución-de-la-obtención-del-carrito)
+- [5. Pedido](#5-pedido)
+  - [5.1. Entities --\> Order.cs](#51-entities----ordercs)
+  - [5.2. Entities --\> OrderDetails.cs](#52-entities----orderdetailscs)
+  - [5.3. DbContexts --\> ApplicationDbContext.cs](#53-dbcontexts----applicationdbcontextcs)
+  - [5.4. Hacemos una nueva migración para subir las nuevas entidades a la BBDD](#54-hacemos-una-nueva-migración-para-subir-las-nuevas-entidades-a-la-bbdd)
+  - [5.5. Actualizamos nuestro diagrama de BBDD](#55-actualizamos-nuestro-diagrama-de-bbdd)
+  - [5.6. OrderDTO y OrderDetailsDTO](#56-orderdto-y-orderdetailsdto)
+    - [5.6.1. DTOs --\> OrderCreateDTO](#561-dtos----ordercreatedto)
+    - [5.6.2. DTOs --\> OrderUpdateDTO](#562-dtos----orderupdatedto)
+    - [5.6.3. DTOs --\> OrderDetailsCreateDTO](#563-dtos----orderdetailscreatedto)
+  - [5.7. Controllers --\> OrderController.cs](#57-controllers----ordercontrollercs)
+    - [5.7.1. OrderController.cs --\> GetOrders()](#571-ordercontrollercs----getorders)
+    - [5.7.2. OrderController.cs --\> GetOrder()](#572-ordercontrollercs----getorder)
+    - [5.7.3. OrderController.cs --\> CreateOrder()](#573-ordercontrollercs----createorder)
+    - [5.7.4. Tools --\> Constants.cs](#574-tools----constantscs)
+    - [5.7.5. OrderController.cs --\> UpdateOrder()](#575-ordercontrollercs----updateorder)
+  - [5.8. Pruebas de Ejecución de los endpoints del Pedido](#58-pruebas-de-ejecución-de-los-endpoints-del-pedido)
+    - [5.8.1. Prueba de crear un pedido](#581-prueba-de-crear-un-pedido)
+    - [5.8.2. Prueba de obtener un pedido por su id](#582-prueba-de-obtener-un-pedido-por-su-id)
+    - [5.8.3. Prueba de obtener todos los pedidos de un usuario](#583-prueba-de-obtener-todos-los-pedidos-de-un-usuario)
+    - [5.8.4. Prueba de actualizar un pedido](#584-prueba-de-actualizar-un-pedido)
+- [6. Forma de Pago](#6-forma-de-pago)
+  - [6.1. API Secret Key](#61-api-secret-key)
+  - [6.2. appsettings.json](#62-appsettingsjson)
+  - [6.3. Buscar e Instalar el paquete Nuget](#63-buscar-e-instalar-el-paquete-nuget)
+  - [6.4. Controllers --\> PaymentController.cs](#64-controllers----paymentcontrollercs)
+    - [6.4.1. PaymentController.cs --\> OrderPayment()](#641-paymentcontrollercs----orderpayment)
+  - [6.5 Prueba de Ejecución](#65-prueba-de-ejecución)
+- [7. Despliegue de la API en Azure](#7-despliegue-de-la-api-en-azure)
+  - [7.1. Prueba de Ejecución en entorno de producción](#71-prueba-de-ejecución-en-entorno-de-producción)
+- [Webgrafía y Enlaces de Interés](#webgrafía-y-enlaces-de-interés)
+    - [1. Introduction to Identity on ASP.NET Core](#1-introduction-to-identity-on-aspnet-core)
+    - [2. How can I change the table names when using ASP.NET Identity?](#2-how-can-i-change-the-table-names-when-using-aspnet-identity)
+    - [3. Wrapping ASP.NET Web API Responses for consistency and to provide additional information](#3-wrapping-aspnet-web-api-responses-for-consistency-and-to-provide-additional-information)
+    - [4. How to make your Web API responses consistent and useful](#4-how-to-make-your-web-api-responses-consistent-and-useful)
+    - [5. How to use Azure Blob Storage in an ASP.NET Core Web API to list, upload, download, and delete files](#5-how-to-use-azure-blob-storage-in-an-aspnet-core-web-api-to-list-upload-download-and-delete-files)
+    - [6. Almacenamiento de archivos mediante un API en .NET y Azure Blob Storage](#6-almacenamiento-de-archivos-mediante-un-api-en-net-y-azure-blob-storage)
+    - [7. Web API in .NET 6.0 Tutorial: How to Build CRUD Operation](#7-web-api-in-net-60-tutorial-how-to-build-crud-operation)
+    - [8. .NET 7 Web API \& Entity Framework - Full Course (CRUD, Repository Pattern, DI, SQL Server \& more)](#8-net-7-web-api--entity-framework---full-course-crud-repository-pattern-di-sql-server--more)
+    - [9. .NET 7 Web API - Create JSON Web Tokens (JWT) - User Registration / Login /](#9-net-7-web-api---create-json-web-tokens-jwt---user-registration--login-)
+    - [10. .NET 7 Web API - Role-Based Authorization with JSON Web Tokens (JWT) \& the dotnet user-jwts CLI](#10-net-7-web-api---role-based-authorization-with-json-web-tokens-jwt--the-dotnet-user-jwts-cli)
+    - [11. Swagger Documentation --\> Bearer Authentication](#11-swagger-documentation----bearer-authentication)
+    - [12. How To Add JWT Authentication To An ASP.NET Core API](#12-how-to-add-jwt-authentication-to-an-aspnet-core-api)
+    - [13. How to Implement JWT Authentication in Asp.Net Core Web API](#13-how-to-implement-jwt-authentication-in-aspnet-core-web-api)
+    - [14. Using Authorization with Swagger in ASP.NET Core](#14-using-authorization-with-swagger-in-aspnet-core)
+    - [15. ASP.NET Core Swagger Documentation with Bearer Authentication](#15-aspnet-core-swagger-documentation-with-bearer-authentication)
+    - [16. ShoppingCartService Explanation](#16-shoppingcartservice-explanation)
+    - [17. ASP.NET Core Blazor: Creating Shopping Cart with EF and Web API](#17-aspnet-core-blazor-creating-shopping-cart-with-ef-and-web-api)
+    - [18. Stripe API - Create a PaymentIntent object](#18-stripe-api---create-a-paymentintent-object)
+    - [19. Accept a payment - Create a PaymentIntent with .NET](#19-accept-a-payment---create-a-paymentintent-with-net)
+    - [20. Easily Deploy a .NET 7 API to Azure! \[2023 Tutorial\]](#20-easily-deploy-a-net-7-api-to-azure-2023-tutorial)
+    - [21. Deploying the Web API to Azure with Dotnet command line: Field inventory management](#21-deploying-the-web-api-to-azure-with-dotnet-command-line-field-inventory-management)
+  - [Inteligencias Artificiales usadas como ayuda y orientación](#inteligencias-artificiales-usadas-como-ayuda-y-orientación)
+    - [1. OpenAI --\> ChatGPT](#1-openai----chatgpt)
+    - [2. Visual Studio Extension --\> GitHub Copilot](#2-visual-studio-extension----github-copilot)
+- [Pruebas de Ejecución](#pruebas-de-ejecución)
+  - [ProductController.cs --\> GetProducts()](#productcontrollercs----getproducts)
+  - [ProductController.cs --\> GetProduct(int id)](#productcontrollercs----getproductint-id)
+  - [ProductController.cs --\> CreateProduct(\[FromForm\] ProductCreateDTO productCreateDTO)](#productcontrollercs----createproductfromform-productcreatedto-productcreatedto)
+  - [ProductController.cs --\> UpdateProduct(int id, \[FromForm\] ProductUpdateDTO productUpdateDTO)](#productcontrollercs----updateproductint-id-fromform-productupdatedto-productupdatedto)
+  - [ProductController.cs --\> DeleteProduct(int id)](#productcontrollercs----deleteproductint-id)
+  - [AuthenticationController.cs --\> Register(\[FromBody\] RegisterRequestDTO registerRequestDTO)](#authenticationcontrollercs----registerfrombody-registerrequestdto-registerrequestdto)
+  - [AuthenticationController.cs --\> Login(\[FromBody\] LoginRequestDTO loginRequestDTO)](#authenticationcontrollercs----loginfrombody-loginrequestdto-loginrequestdto)
+  - [CartController.cs --\> AddOrUpdateCartItem(string userId, int productId, int updateQuantity)](#cartcontrollercs----addorupdatecartitemstring-userid-int-productid-int-updatequantity)
+    - [Crear un carrito](#crear-un-carrito)
+    - [Añadir o quitar productos(items) del carrito](#añadir-o-quitar-productositems-del-carrito)
+    - [Crear un carrito con otro usuario](#crear-un-carrito-con-otro-usuario)
+  - [CartController.cs --\> GetCart(string userId)](#cartcontrollercs----getcartstring-userid)
+  - [OrderController.cs --\> CreateOrder(\[FromBody\] OrderCreateDTO orderCreateDTO)](#ordercontrollercs----createorderfrombody-ordercreatedto-ordercreatedto)
+  - [OrderController.cs --\> GetOrder(int orderId)](#ordercontrollercs----getorderint-orderid)
+  - [OrderController.cs --\> GetOrders(string? userId)](#ordercontrollercs----getordersstring-userid)
+  - [OrderController.cs --\> UpdateOrder(int orderId, \[FromBody\] OrderUpdateDTO orderUpdateDTO)](#ordercontrollercs----updateorderint-orderid-frombody-orderupdatedto-orderupdatedto)
+  - [PaymentController.cs --\> OrderPayment(string userId)](#paymentcontrollercs----orderpaymentstring-userid)
+- [Extras](#extras)
+  - [1. Crear la BBDD en Azure](#1-crear-la-bbdd-en-azure)
+  - [2. Crear el Azure Storage para nuestras imágenes](#2-crear-el-azure-storage-para-nuestras-imágenes)
+  - [3. Cambiar los nombres por defecto de las tablas de Identity](#3-cambiar-los-nombres-por-defecto-de-las-tablas-de-identity)
+    - [DbContexts --\> UserEntityConfiguration.cs](#dbcontexts----userentityconfigurationcs)
+    - [DbContexts --\> ApplicationDbContext.cs](#dbcontexts----applicationdbcontextcs)
+    - [Creamos una nueva migración y la pusheamos a la BBDD](#creamos-una-nueva-migración-y-la-pusheamos-a-la-bbdd)
+- [4. Obtener una nueva Clave Secreta API en Stripe](#4-obtener-una-nueva-clave-secreta-api-en-stripe)
+
+
 ## 0.0 Crear el proyecto web API en Visual Studio 2022
 
 ![](./img/1.png)
@@ -2283,6 +2453,95 @@ public async Task<ActionResult<ApiResponse>> OrderPayment(string userId)
 
 [Prueba de Ejecución de crear un PaymentIntent de Stripe](#paymentcontrollercs----orderpaymentstring-userid)
 
+# 7. Despliegue de la API en Azure
+
+El proceso normal para desplegar la API en Azure desde el mismo VS2022 sería, primero darle al click derecho sobre el *csproj.cs* (debajo de la misma solución en el explorador de soluciones) y seleccionar *Publicar*, y seleccionar *Azure App Service (windows)*, y si estamos previamente logueados con nuestra cuenta de Microsoft en VS2022, se nos abre como un marco de opciones donde podemos crear un nuevo *Azure App Service* sin salir de VS2022 y sin tener que ir a hacerlo a Azure...
+
+Lo que pasa es que a mí, por fallos del VS2022 que desconozco, ese marco de opciones nunca me sale (aunque esté logueado con la cuenta de Microsot). De modo que he tenido que hacer este primer paso a través de Azure directamente.
+
+![](./img/Deploy1/1.png)
+![](./img/Deploy1/2.png)
+![](./img/Deploy1/3.png)
+![](./img/Deploy1/4.png)
+![](./img/Deploy1/5.png)
+![](./img/Deploy1/6.png)
+![](./img/Deploy1/7.png)
+![](./img/Deploy1/8.png)
+![](./img/Deploy1/9.png)
+
+Y así ya tendríamos creado nueestro servicio de azure *App Service*, el cual es necesario para el despliegue de la API en Azure.
+
+**Nota:** antes de continuar, vamos a parar un momento para llevar todas las nuevas tablas que fueron creadas a partir de las demás entidades, a la BBDD de Azure en la nube. Como ya sabemos hacer, simplemente cambiamos en el Program.cs la cadena de conexión a la BBDD de Azure, y a través de la consola de administración de paquetes Nugets, hacemos un *Update-Database*.
+
+![](./img/Deploy1/10.png)
+
+Volviendo con el tema de desplegar la API en Azure, si vamos ahora a la sección de *App Services*, podremos encontrar el *app service* que habíamos creado antes, y si lo selecionamos, podemos ver toda su información y las diferentes opciones que nos ofrece. Entre estas opciones, tenemos que pulsar sobre la de *descargar perfil de publicación*.
+
+![](./img/Deploy1/11.png)
+
+Ya que antes desde el VS2022, no me aparecía aquel marco de opciones del que hablaba, ahora con este archivo que he descargado, puedo tirar por otro camino, importante esta configuración de mi *app service*.
+
+![](./img/Deploy1/12.png)
+![](./img/Deploy1/13.png)
+![](./img/Deploy1/14.png)
+![](./img/Deploy1/15.png)
+![](./img/Deploy1/16.png)
+![](./img/Deploy1/17.png)
+![](./img/Deploy1/18.png)
+
+En cuanto hemos desplegado (publicado) la API y hemos entrado a verla a través del enlace que se había generado, vemos que nos salta de primeras un error de que no se puede encontrar nuestra API...
+
+Eso es porque tenemos que cambiar una cosa en la configuración de Swagger que nos venía por defecto en el Program.cs, es decir, tenemos que configurar Swagger para que sea accesible desde un entorno que no sea de desarrollo únicamente.
+
+```csharp
+...
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+app.UseSwagger();
+
+// after our first deployment, we have to extrac the app.UseSwagger() method ...
+if (app.Environment.IsDevelopment())
+{
+    // app.UseSwagger();
+    app.UseSwaggerUI();
+}
+// ... and set two parameters for app.UseSwaggerUI() when the enviroment is not in development mode
+else
+{
+    app.UseSwaggerUI(swagger =>
+    {
+        swagger.SwaggerEndpoint("/swagger/v1/swagger.json", "eFoodDelivery - Web Deploy 1");
+        swagger.RoutePrefix = string.Empty;
+    });
+}
+...
+```
+
+Si ahora volvemos a darle al botón de *Publicar*, se vuelve a hacer (se actualiza) brevemente el despliegue, y comprobamos que ya podemos ver nuestra API en internet.
+
+![](./img/Deploy1/19.png)
+![](./img/Deploy1/20.png)
+![](./img/Deploy1/21.png)
+
+Pero cuando he ido a hacer una simple prueba del endpoint del GET de los productos, me encuentro con un error 500 Internal Server Error.
+
+Esto ha pasado porque se me había olvidado activar una opción dentro de Azure, la cual opermite que los demás servicios del conjunto de mis recursos de Azure, puedan acceder a la BBDD de datos que está dentro del SQL Server de Azure.
+
+![](./img/Deploy1/22.png)
+![](./img/Deploy1/23.png)
+![](./img/Deploy1/24.png)
+
+Y con esto, la API ya ha sido totalmente desplegada y es completamenete funcional y accesible en internet.
+
+![](./img/Deploy1/25.png)
+![](./img/Deploy1/26.png)
+
+## 7.1. Prueba de Ejecución en entorno de producción
+
+[Demostración de la API desplegada en Azure](https://user-images.githubusercontent.com/80839621/230026623-debb51c5-dbde-4eae-af5c-4f5c84b97e8e.mp4)
+
+
 # Webgrafía y Enlaces de Interés
 
 ### 1. [Introduction to Identity on ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-7.0&tabs=visual-studio)
@@ -2322,6 +2581,10 @@ public async Task<ActionResult<ApiResponse>> OrderPayment(string userId)
 ### 18. [Stripe API - Create a PaymentIntent object](https://stripe.com/docs/api/payment_intents/create?lang=dotnet)
 
 ### 19. [Accept a payment - Create a PaymentIntent with .NET](https://www.youtube.com/watch?v=mqEjRgoZWdo)
+
+### 20. [Easily Deploy a .NET 7 API to Azure! [2023 Tutorial]](https://www.youtube.com/watch?v=EKqXAMLsnKQ&ab_channel=IsraelQuiroz)
+
+### 21. [Deploying the Web API to Azure with Dotnet command line: Field inventory management](https://learn.microsoft.com/en-us/power-apps/guidance/fusion-dev-ebook/05-creating-publishing-web-api-in-azure)
 
 ## Inteligencias Artificiales usadas como ayuda y orientación
 
