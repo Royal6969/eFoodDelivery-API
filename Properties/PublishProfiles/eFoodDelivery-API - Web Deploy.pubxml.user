@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Este archivo se usa en el proceso de publicación y empaquetado del proyecto web. Para personalizar el comportamiento de este proceso,
+edite el archivo MSBuild. Visite https://go.microsoft.com/fwlink/?LinkID=208121 para obtener más información. 
+-->
+<Project>
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <EncryptedPassword>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAdRNmVv1jrk6E0KUj1yXg3AAAAAACAAAAAAAQZgAAAAEAACAAAACjs+au0PXMq+Pi9F8S5Mk1ELCJcm74D/L/p/MQvLxSNgAAAAAOgAAAAAIAACAAAABgfGRV7qU5KhcsjBM/bjeJSoDFhr+7uNduOwh/8t5GToAAAABElgBi3NDGDrjJFBN2oR0GKRDRtm5J50yQfpy7Bglhz+IqZ6DpPA3+2471ddjVOoVlV/ujUaoFfo70zETYRtFuEXsxwwCgyCGZq9fG5uZLyfZm7Q62RSC+Drv+KK5SfJ03hnRgT4mCUpjBsBBVKvVfKAaAc1uSqA/j1FQsALjOp0AAAAAhS+MN8oxLFvrYyV1eKBPeQngzCQRem1nIOhSB5g7PYBU19mhy5XEZCI4tJPmTtjA2lTqqM1IZn9l/026fVYbo</EncryptedPassword>
+    <History>True|2023-05-14T12:11:08.1416501Z;True|2023-04-24T16:06:06.4577409+02:00;True|2023-04-24T16:01:13.4391515+02:00;True|2023-04-24T15:58:37.2157366+02:00;True|2023-04-24T15:51:46.3252045+02:00;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+  <ItemGroup>
+    <DestinationConnectionStrings Include="AzureDbConnection">
+      <Value>Server=tcp:efooddelivery-sql-server.database.windows.net,1433%3bInitial Catalog=eFoodDelivery-database%3bPersist Security Info=False%3bUser ID=sqladmin%3bPassword=admin123%2a%3bMultipleActiveResultSets=False%3bEncrypt=True%3bTrustServerCertificate=False%3b</Value>
+    </DestinationConnectionStrings>
+  </ItemGroup>
+</Project>

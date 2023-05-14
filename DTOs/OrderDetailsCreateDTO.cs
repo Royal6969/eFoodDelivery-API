@@ -5,16 +5,16 @@ namespace eFoodDelivery_API.DTOs
     public class OrderDetailsCreateDTO
     {
         [Required]
-        public int ItemId { get; set; }
+        public int ProductId { get; set; }
 
         [Required]
-        public int ItemQuantity { get; set; }
+        public int Quantity { get; set; }
 
         [Required]
-        public string ItemName { get; set; }
+        public string Name { get; set; }
 
         [Required]
         [Range(1, 99, ErrorMessage = "El precio del producto no puede ser mayor a 99,00€")]
-        public double ItemPrice { get; set; }
+        public double Price { get; set; }
     }
 }

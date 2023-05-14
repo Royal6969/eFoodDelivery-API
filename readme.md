@@ -1897,35 +1897,35 @@ public class OrderDetails
 
     // we need the item id similar to what we had inside the CartItem with the productId
     [Required]
-    [Column("ItemId")]
-    [Display(Name = "ItemId")]
-    public int ItemId { get; set; }
+    [Column("ProductId")]
+    [Display(Name = "ProductId")]
+    public int ProductId { get; set; }
 
     // we need the quantity of the item that they want to order
     [Required]
-    [Column("ItemQuantity")]
-    [Display(Name = "ItemQuantity")]
-    public int ItemQuantity { get; set; }
+    [Column("Quantity")]
+    [Display(Name = "Quantity")]
+    public int Quantity { get; set; }
 
     // and from the Product, we can retrieve the name and price of that product
     // but sometimes what can happen is that product, the name or price gets updated
     // in that case, we don't want it to toggle the price that order was placed with
     // so that is why right here I will also add two more columns for item name and item price
     [Required]
-    [Column("ItemName")]
-    [Display(Name = "ItemName")]
-    public string ItemName { get; set; }
+    [Column("Name")]
+    [Display(Name = "Name")]
+    public string Name { get; set; }
 
     [Required]
-    [Column("ItemPrice")]
-    [Display(Name = "ItemPrice")]
+    [Column("Price")]
+    [Display(Name = "Price")]
     [Range(1, 99, ErrorMessage = "El precio del producto no puede ser mayor a 99,00€")]
-    public double ItemPrice { get; set; }
+    public double Price { get; set; }
 
 
     /*************************************** Relational fields *************************************/
     // we need the navigation property and the FK relation
-    [ForeignKey("ItemId")]
+    [ForeignKey("ProductId")]
     public Product Product { get; set; }
 }
 ```
@@ -2013,17 +2013,17 @@ public class OrderUpdateDTO
 public class OrderDetailsCreateDTO
 {
     [Required]
-    public int ItemId { get; set; }
+    public int ProductId { get; set; }
 
     [Required]
-    public int ItemQuantity { get; set; }
+    public int quantity { get; set; }
 
     [Required]
-    public string ItemName { get; set; }
+    public string name { get; set; }
 
     [Required]
     [Range(1, 99, ErrorMessage = "El precio del producto no puede ser mayor a 99,00€")]
-    public double ItemPrice { get; set; }
+    public double price { get; set; }
 }
 ```
 
@@ -2170,10 +2170,10 @@ public async Task<ActionResult<ApiResponse>> CreateOrder([FromBody] OrderCreateD
                 // create a new OrderDetails object and let's assign the properties
                 OrderDetails newOrderDetails = new OrderDetails();
                 newOrderDetails.OrderId = newOrder.OrderId;
-                newOrderDetails.ItemName = orderDetailsDTO.ItemName;
-                newOrderDetails.ItemId = orderDetailsDTO.ItemId;
-                newOrderDetails.ItemPrice = orderDetailsDTO.ItemPrice;
-                newOrderDetails.ItemQuantity = orderDetailsDTO.ItemQuantity;
+                newOrderDetails.Name = orderDetailsDTO.Name;
+                newOrderDetails.ProductId = orderDetailsDTO.ProductId;
+                newOrderDetails.Price = orderDetailsDTO.Price;
+                newOrderDetails.Quantity = orderDetailsDTO.Quantity;
 
                 // adding the newOrderDetails to the OrderDetailsDbSet 
                 _dbContext.OrderDetailsDbSet.Add(newOrderDetails);

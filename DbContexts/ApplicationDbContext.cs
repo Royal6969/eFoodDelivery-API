@@ -48,7 +48,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Mejor valorados",
                     Category = "Almuerzo",
                     Price = 9.95,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/1.paella-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/1.paella-nobg.png"
                 },
                 new Product
                 {
@@ -60,7 +60,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Más vendidos",
                     Category = "Almuerzo",
                     Price = 7.99,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/2.tortilla-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/2.tortilla-nobg.png"
                 },
                 new Product
                 {
@@ -72,7 +72,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Recomendados",
                     Category = "Almuerzo",
                     Price = 6.49,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/3.salmorejo-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/3.salmorejo-nobg.png"
                 },
                 new Product
                 {
@@ -84,7 +84,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Más vendidos",
                     Category = "Almuerzo",
                     Price = 5.95,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/4.ensaladilla-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/4.ensaladilla-nobg.png"
                 },
                 new Product
                 {
@@ -96,7 +96,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Recomendados",
                     Category = "Almuerzo",
                     Price = 10.99,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/5.migas-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/5.migas-nobg.png"
                 },
                 new Product
                 {
@@ -108,7 +108,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Mejor valorados",
                     Category = "Cena",
                     Price = 8.75,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/6.calamares-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/6.calamares-nobg.png"
                 },
                 new Product
                 {
@@ -120,7 +120,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Recomendados",
                     Category = "Cena",
                     Price = 8.50,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/7.pulpo-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/7.pulpo-nobg.png"
                 },
                 new Product
                 {
@@ -132,7 +132,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Recomendados",
                     Category = "Almuerzo",
                     Price = 9.95,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/8.cocido-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/8.cocido-nobg.png"
                 },
                 new Product
                 {
@@ -144,7 +144,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Más vendidos",
                     Category = "Cena",
                     Price = 7.99,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/9.croquetas-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/9.croquetas-nobg.png"
                 },
                 new Product
                 {
@@ -156,7 +156,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Mejor valorados",
                     Category = "Postre",
                     Price = 6.45,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/10.torrijas-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/10.torrijas-nobg.png"
                 },
                 new Product
                 {
@@ -168,7 +168,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Recomendados",
                     Category = "Postre",
                     Price = 5.75,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/11.pestiños-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/11.pestiños-nobg.png"
                 },
                 new Product
                 {
@@ -180,7 +180,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Más vendidos",
                     Category = "Desayuno",
                     Price = 3.99,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/12.churros-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/12.churros-nobg.png"
                 },
                 new Product
                 {
@@ -192,7 +192,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Recomendados",
                     Category = "Postre",
                     Price = 4.75,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/13.leche-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/13.leche-nobg.png"
                 },
                 new Product
                 {
@@ -204,7 +204,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Recomendados",
                     Category = "Postre",
                     Price = 3.50,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/14.huesillos-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/14.huesillos-nobg.png"
                 },
                 new Product
                 {
@@ -216,7 +216,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Más vendidos",
                     Category = "Bebidas",
                     Price = 1.50,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/15.cocacola-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/15.cocacola-nobg.png"
                 },
                 new Product
                 {
@@ -228,7 +228,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Recomendados",
                     Category = "Bebidas",
                     Price = 1.50,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/16.fanta-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/16.fanta-nobg.png"
                 },
                 new Product
                 {
@@ -240,7 +240,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Recomendados",
                     Category = "Bebidas",
                     Price = 1.50,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/17.7up-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/17.7up-nobg.png"
                 },
                 new Product
                 {
@@ -252,7 +252,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Más vendidos",
                     Category = "Bebidas",
                     Price = 1.80,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/18.cruzcampo-pilsen-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/18.cruzcampo-pilsen-nobg.png"
                 },
                 new Product
                 {
@@ -264,7 +264,7 @@ namespace eFoodDelivery_API.DbContexts
                     Tag = "Mejor valorados",
                     Category = "Bebidas",
                     Price = 1.90,
-                    Image = "https://efooddeliveryimages.blob.core.windows.net/efooddelivery-images/19.cruzcampo-especial-nobg.png"
+                    Image = "https://efooddeliveryimagenes.blob.core.windows.net/efooddelivery-contenedor-imagenes/19.cruzcampo-especial-nobg.png"
                 }
             );
         

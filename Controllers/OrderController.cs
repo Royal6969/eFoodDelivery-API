@@ -136,10 +136,10 @@ namespace eFoodDelivery_API.Controllers
                         // create a new OrderDetails object and let's assign the properties
                         OrderDetails newOrderDetails = new OrderDetails();
                         newOrderDetails.OrderId = newOrder.OrderId;
-                        newOrderDetails.ItemName = orderDetailsDTO.ItemName;
-                        newOrderDetails.ItemId = orderDetailsDTO.ItemId;
-                        newOrderDetails.ItemPrice = orderDetailsDTO.ItemPrice;
-                        newOrderDetails.ItemQuantity = orderDetailsDTO.ItemQuantity;
+                        newOrderDetails.Name = orderDetailsDTO.Name;
+                        newOrderDetails.ProductId = orderDetailsDTO.ProductId;
+                        newOrderDetails.Price = orderDetailsDTO.Price;
+                        newOrderDetails.Quantity = orderDetailsDTO.Quantity;
 
                         // adding the newOrderDetails to the OrderDetailsDbSet 
                         _dbContext.OrderDetailsDbSet.Add(newOrderDetails);
