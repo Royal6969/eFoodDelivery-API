@@ -108,6 +108,9 @@
     - [5.8.2. Prueba de obtener un pedido por su id](#582-prueba-de-obtener-un-pedido-por-su-id)
     - [5.8.3. Prueba de obtener todos los pedidos de un usuario](#583-prueba-de-obtener-todos-los-pedidos-de-un-usuario)
     - [5.8.4. Prueba de actualizar un pedido](#584-prueba-de-actualizar-un-pedido)
+  - [5.9. Extra: Añadir filtrado de búsqueda y paginación a los pedidos](#59-extra-añadir-filtrado-de-búsqueda-y-paginación-a-los-pedidos)
+    - [5.9.1. OrderController.cs --\> Añadir filtrado por búsqueda](#591-ordercontrollercs----añadir-filtrado-por-búsqueda)
+    - [5.9.2. OrderController.cs --\> Añadir paginación](#592-ordercontrollercs----añadir-paginación)
 - [6. Forma de Pago](#6-forma-de-pago)
   - [6.1. API Secret Key](#61-api-secret-key)
   - [6.2. appsettings.json](#62-appsettingsjson)
@@ -2295,6 +2298,134 @@ public async Task<ActionResult<ApiResponse>> UpdateOrder(int orderId, [FromBody]
 ### 5.8.4. Prueba de actualizar un pedido
 
 [Prueba de Ejecución del endpoint de UpdateOrder(int orderId, [FromBody] OrderUpdateDTO orderUpdateDTO)](#ordercontrollercs----updateorderint-orderid-frombody-orderupdatedto-orderupdatedto)
+
+## 5.9. Extra: Añadir filtrado de búsqueda y paginación a los pedidos
+
+### 5.9.1. OrderController.cs --> Añadir filtrado por búsqueda
+
+```cs
+[HttpGet]
+[Authorize]
+public async Task<ActionResult<ApiResponse>> GetOrders(string? userId, string orderSearch, string orderStatus) // search and status are for pagination and search functionality
+{
+    // note that the parameter userId has its type string with ?
+    // that's why userId can be populated or not, because if admin is getting all the orders, we want to fetch all the orders from db
+    // but if a user wants to see their orders, then we will only fetch the orders for that user
+
+    try
+    {
+        //var ordersRetrievedFromDb = _dbContext.OrdersDbSet
+        IEnumerable<Order> ordersRetrievedFromDb = _dbContext.OrdersDbSet
+            .Include(orderDetails => orderDetails.OrderDetails) // inlude the child objetc (collection for OrderDetails) in Order
+            .ThenInclude(product => product.Product)            // include the grandchild object (FK for Product) in OrderDetails
+            .OrderByDescending(order => order.OrderId)          // specify the way we want to order the resulting objects
+        ;
+
+        // we're checking if a userId is populated we filter that as we're getting the complete result here (in the else part)
+        if (!string.IsNullOrEmpty(userId)) // we can also say ... if (userId != null)
+        {
+            _apiResponse.Result = ordersRetrievedFromDb.Where(client => client.ClientId == userId);
+        }
+        /*
+        else
+        {
+            _apiResponse.Result = ordersRetrievedFromDb;
+        }
+        */ // but now we don't want it like before
+        
+        // what we want to do is we want to apply all the other filters that we have
+        // so right here, let me scroll down and we will be adding to if condition
+        
+        // the first one we can check if orderSearch string is not empty, then we will filter our orders by name, email or phone
+        // if any of them have the search string within them, then we will display and assign that to order
+        if (!string.IsNullOrEmpty(orderSearch))
+        {
+            ordersRetrievedFromDb = ordersRetrievedFromDb.Where(client =>
+                client.ClientName.ToLower().Contains(orderSearch.ToLower())  ||
+                client.ClientEmail.ToLower().Contains(orderSearch.ToLower()) ||
+                client.ClientPhone.ToLower().Contains(orderSearch.ToLower())
+            );
+        }
+        // similarly, if orderStatus is not empty, we will filter based on status and converting to lower case
+        if (!string.IsNullOrEmpty(orderStatus))
+        {
+            ordersRetrievedFromDb = ordersRetrievedFromDb.Where(order => order.OrderStatus.ToLower() == orderStatus.ToLower());
+        }
+        // whith that, we added the search functionality to orders
+
+        _apiResponse.StatusCode = HttpStatusCode.OK;
+        return Ok(_apiResponse);
+    }
+    ...
+}
+```
+
+### 5.9.2. OrderController.cs --> Añadir paginación
+
+Primero tenemos que crear un modelo para la paginación, ya que ésta irá de vuelta incluída en la respuesta de la API
+
+```cs
+public class Pagination
+{
+    public int ActualPage { get; set; }     // the current page that you are on
+    public int PageSize { get; set; }       // how many records you want on one page will be the page size
+    public int RecordsNumber { get; set; }  // total records will be the total number of records that are avaible for the search that they have
+}
+```
+
+Ahora implementamos la paginación en el método del controlador de pedidos
+
+```cs
+[HttpGet]
+[Authorize]
+public async Task<ActionResult<ApiResponse>> GetOrders(
+    string? userId, 
+    string orderSearch, string orderStatus,  // search and status are for search functionality
+    int pageNumber = 1, int pageSize = 5     // this is for pagination functionality, we'll start in page numer 1 and we'll see five orders per page
+)
+{
+    try
+    {
+        ...
+        // first, create a pagination object and populate actual page, page size and records number
+        Pagination pagination = new Pagination();
+        pagination.ActualPage = pageNumber;
+        pagination.PageSize = pageSize;
+        pagination.RecordsNumber = ordersRetrievedFromDb.Count();
+
+        // note that we have to add the "X-Pagination" special type for the Headers in the response to allow the pagination
+        Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(pagination));
+
+        // aply filter for pagination
+        // so where we're returning the complete orders, we¡ll be using .Skip() and .Take() with Enumerable
+        _apiResponse.Result = ordersRetrievedFromDb
+            .Skip((pageNumber - 1) * pageSize) // so think about pageNumber is 2, how many records we want to skip?
+            .Take(pageSize) //we want to take records base on the pageSize, if our pageSize is 10, we want to take the next 10 records to be displayed
+        ;
+
+        _apiResponse.StatusCode = HttpStatusCode.OK;
+        return Ok(_apiResponse);
+    }
+    ...
+}
+```
+
+Y ahora en el Program.cs, para que la apliación de React pueda recibir la cabecera de respuesta del "X-Pagination" sin problemas, necesitamos añadir una cosa más a alos Cors
+
+```cs
+app.UseCors(options => // when we have to add cors, also inside the request pipeline, we have to use cors
+{
+    options
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowAnyOrigin()
+/*-->*/ .WithExposedHeaders("*") // this for the pagination header that we have exposed to react application will be able to read that and work with
+    ;
+});
+```
+
+![](./img/99.png)
+![](./img/100.png)
 
 # 6. Forma de Pago
 

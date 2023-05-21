@@ -147,6 +147,7 @@ app.UseCors(options => // when we have to add cors, also inside the request pipe
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowAnyOrigin()
+        .WithExposedHeaders("*") // this for the pagination header that we have exposed to react application will be able to read that and work with
     ;
 });
 

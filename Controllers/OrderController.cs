@@ -3,10 +3,12 @@ using eFoodDelivery_API.DTOs;
 using eFoodDelivery_API.Entities;
 using eFoodDelivery_API.Models;
 using eFoodDelivery_API.Tools;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using System.Text.Json;
 
 namespace eFoodDelivery_API.Controllers
 {
@@ -28,7 +30,12 @@ namespace eFoodDelivery_API.Controllers
 
 
         [HttpGet]
-        public async Task<ActionResult<ApiResponse>> GetOrders(string? userId)
+        [Authorize]
+        public async Task<ActionResult<ApiResponse>> GetOrders(
+            string? userId, 
+            string orderSearch, string orderStatus,  // search and status are for search functionality
+            int pageNumber = 1, int pageSize = 5     // this is for pagination functionality, we'll start in page numer 1 and we'll see five orders per page
+        )
         {
             // note that the parameter userId has its type string with ?
             // that's why userId can be populated or not, because if admin is getting all the orders, we want to fetch all the orders from db
@@ -36,20 +43,62 @@ namespace eFoodDelivery_API.Controllers
 
             try
             {
-                var ordersRetrievedFromDb = _dbContext.OrdersDbSet
+                //var ordersRetrievedFromDb = _dbContext.OrdersDbSet
+                IEnumerable<Order> ordersRetrievedFromDb = _dbContext.OrdersDbSet
                     .Include(orderDetails => orderDetails.OrderDetails) // inlude the child objetc (collection for OrderDetails) in Order
                     .ThenInclude(product => product.Product)            // include the grandchild object (FK for Product) in OrderDetails
                     .OrderByDescending(order => order.OrderId)          // specify the way we want to order the resulting objects
                 ;
 
-                if (userId != null) // we can also say ... if (!string.IsNullOrEmpty(userId))
+                // we're checking if a userId is populated we filter that as we're getting the complete result here (in the else part)
+                if (!string.IsNullOrEmpty(userId)) // we can also say ... if (userId != null)
                 {
-                    _apiResponse.Result = ordersRetrievedFromDb.Where(client => client.ClientId == userId);
+                    //_apiResponse.Result = ordersRetrievedFromDb.Where(client => client.ClientId == userId);
+                    // now for pagination...
+                    ordersRetrievedFromDb = ordersRetrievedFromDb.Where(client => client.ClientId == userId);
                 }
+                /*
                 else
                 {
                     _apiResponse.Result = ordersRetrievedFromDb;
                 }
+                */ // but now we don't want it like before
+                
+                // what we want to do is we want to apply all the other filters that we have
+                // so right here, let me scroll down and we will be adding to if condition
+                
+                // the first one we can check if orderSearch string is not empty, then we will filter our orders by name, email or phone
+                // if any of them have the search string within them, then we will display and assign that to order
+                if (!string.IsNullOrEmpty(orderSearch))
+                {
+                    ordersRetrievedFromDb = ordersRetrievedFromDb.Where(client =>
+                        client.ClientName.ToLower().Contains(orderSearch.ToLower())  ||
+                        client.ClientEmail.ToLower().Contains(orderSearch.ToLower()) ||
+                        client.ClientPhone.ToLower().Contains(orderSearch.ToLower())
+                    );
+                }
+                // similarly, if orderStatus is not empty, we will filter based on status and converting to lower case
+                if (!string.IsNullOrEmpty(orderStatus))
+                {
+                    ordersRetrievedFromDb = ordersRetrievedFromDb.Where(order => order.OrderStatus.ToLower() == orderStatus.ToLower());
+                }
+                // whith that, we added the search functionality to orders
+
+                // first, create a pagination object and populate actual page, page size and records number
+                Pagination pagination = new Pagination();
+                pagination.ActualPage = pageNumber;
+                pagination.PageSize = pageSize;
+                pagination.RecordsNumber = ordersRetrievedFromDb.Count();
+
+                // note that we have to add the "X-Pagination" special type for the Headers in the response to allow the pagination
+                Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(pagination));
+
+                // aply filter for pagination
+                // so where we're returning the complete orders, we¡ll be using .Skip() and .Take() with Enumerable
+                _apiResponse.Result = ordersRetrievedFromDb
+                    .Skip((pageNumber - 1) * pageSize) // so think about pageNumber is 2, how many records we want to skip?
+                    .Take(pageSize) //we want to take records base on the pageSize, if our pageSize is 10, we want to take the next 10 records to be displayed
+                ;
 
                 _apiResponse.StatusCode = HttpStatusCode.OK;
                 return Ok(_apiResponse);

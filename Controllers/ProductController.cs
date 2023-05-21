@@ -4,6 +4,7 @@ using eFoodDelivery_API.Entities;
 using eFoodDelivery_API.Models;
 using eFoodDelivery_API.Services.Interfaces;
 using eFoodDelivery_API.Tools;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -67,6 +68,7 @@ namespace eFoodDelivery_API.Controllers
 
 
         [HttpPost]
+        [Authorize(Roles = Constants.ROLE_ADMIN)]
         public async Task<ActionResult<ApiResponse>> CreateProduct([FromForm] ProductCreateDTO productCreateDTO) // I'm not using [FromBody] and I'm using [FromForm] bacause we also need to upload an image when we creating a product
         {
             try
@@ -114,6 +116,7 @@ namespace eFoodDelivery_API.Controllers
 
 
         [HttpPut("{id:int}")]
+        [Authorize(Roles = Constants.ROLE_ADMIN)]
         public async Task<ActionResult<ApiResponse>> UpdateProduct(int id, [FromForm] ProductUpdateDTO productUpdateDTO) // I'm not using [FromBody] and I'm using [FromForm] bacause we also need to upload an image when we creating a product
         {
             try
@@ -177,6 +180,7 @@ namespace eFoodDelivery_API.Controllers
 
 
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = Constants.ROLE_ADMIN)]
         public async Task<ActionResult<ApiResponse>> DeleteProduct(int id)
         {
             try
