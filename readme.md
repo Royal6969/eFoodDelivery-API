@@ -118,8 +118,12 @@
   - [6.4. Controllers --\> PaymentController.cs](#64-controllers----paymentcontrollercs)
     - [6.4.1. PaymentController.cs --\> OrderPayment()](#641-paymentcontrollercs----orderpayment)
   - [6.5 Prueba de Ejecución](#65-prueba-de-ejecución)
-- [7. Despliegue de la API en Azure](#7-despliegue-de-la-api-en-azure)
-  - [7.1. Prueba de Ejecución en entorno de producción](#71-prueba-de-ejecución-en-entorno-de-producción)
+- [7. Usuarios](#7-usuarios)
+  - [7.1. Controllers --\> UserController.cs](#71-controllers----usercontrollercs)
+    - [7.1.1. UserController.cs --\> GetUsers()](#711-usercontrollercs----getusers)
+- [8. Despliegue de la API en Azure](#8-despliegue-de-la-api-en-azure)
+  - [8.1. Prueba de Ejecución en entorno de producción](#81-prueba-de-ejecución-en-entorno-de-producción)
+  - [8.2. Enlace público a la API desplegada en internet](#82-enlace-público-a-la-api-desplegada-en-internet)
 - [Webgrafía y Enlaces de Interés](#webgrafía-y-enlaces-de-interés)
     - [1. Introduction to Identity on ASP.NET Core](#1-introduction-to-identity-on-aspnet-core)
     - [2. How can I change the table names when using ASP.NET Identity?](#2-how-can-i-change-the-table-names-when-using-aspnet-identity)
@@ -2586,7 +2590,38 @@ public async Task<ActionResult<ApiResponse>> OrderPayment(string userId)
 
 [Prueba de Ejecución de crear un PaymentIntent de Stripe](#paymentcontrollercs----orderpaymentstring-userid)
 
-# 7. Despliegue de la API en Azure
+# 7. Usuarios
+
+## 7.1. Controllers --> UserController.cs
+
+### 7.1.1. UserController.cs --> GetUsers()
+
+```cs
+[HttpGet]
+public async Task<ActionResult<ApiResponse>> GetUsers()
+{
+    try
+    {
+        IEnumerable<ApplicationUser> usersRetrievedFromDb = _dbContext.ApplicationUsersDbSet;
+
+        _apiResponse.Result = usersRetrievedFromDb;
+        _apiResponse.StatusCode = HttpStatusCode.OK;
+        return Ok(_apiResponse);
+    }
+    catch (Exception ex)
+    {
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+    }
+
+    return _apiResponse;
+}
+```
+
+![](./img/101.png)
+![](./img/102.png)
+
+# 8. Despliegue de la API en Azure
 
 El proceso normal para desplegar la API en Azure desde el mismo VS2022 sería, primero darle al click derecho sobre el *csproj.cs* (debajo de la misma solución en el explorador de soluciones) y seleccionar *Publicar*, y seleccionar *Azure App Service (windows)*, y si estamos previamente logueados con nuestra cuenta de Microsoft en VS2022, se nos abre como un marco de opciones donde podemos crear un nuevo *Azure App Service* sin salir de VS2022 y sin tener que ir a hacerlo a Azure...
 
@@ -2670,10 +2705,13 @@ Y con esto, la API ya ha sido totalmente desplegada y es completamenete funciona
 ![](./img/Deploy1/25.png)
 ![](./img/Deploy1/26.png)
 
-## 7.1. Prueba de Ejecución en entorno de producción
+## 8.1. Prueba de Ejecución en entorno de producción
 
 [Demostración de la API desplegada en Azure](https://user-images.githubusercontent.com/80839621/230026623-debb51c5-dbde-4eae-af5c-4f5c84b97e8e.mp4)
 
+## 8.2. Enlace público a la API desplegada en internet
+
+[Swagger Documentation --> eFoodDelivery-API](https://efooddelivery-api.azurewebsites.net/index.html)
 
 # Webgrafía y Enlaces de Interés
 
