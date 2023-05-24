@@ -121,6 +121,8 @@
 - [7. Usuarios](#7-usuarios)
   - [7.1. Controllers --\> UserController.cs](#71-controllers----usercontrollercs)
     - [7.1.1. UserController.cs --\> GetUsers()](#711-usercontrollercs----getusers)
+    - [7.1.2. UserController.cs --\> GetUser()](#712-usercontrollercs----getuser)
+    - [7.1.3. UserController.cs --\> DeleteUser()](#713-usercontrollercs----deleteuser)
 - [8. Despliegue de la API en Azure](#8-despliegue-de-la-api-en-azure)
   - [8.1. Prueba de Ejecución en entorno de producción](#81-prueba-de-ejecución-en-entorno-de-producción)
   - [8.2. Enlace público a la API desplegada en internet](#82-enlace-público-a-la-api-desplegada-en-internet)
@@ -2620,6 +2622,78 @@ public async Task<ActionResult<ApiResponse>> GetUsers()
 
 ![](./img/101.png)
 ![](./img/102.png)
+
+### 7.1.2. UserController.cs --> GetUser()
+
+```cs
+[HttpGet("{id}", Name = "GetUser")] // like this method has a parameter, I need to specify what parameter is (name:type)
+public async Task<IActionResult> GetUser(string id)
+{
+    if (id == 0.ToString()) // check for BadRequest
+    {
+        _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+        _apiResponse.Success = false;
+        return BadRequest(_apiResponse);
+    }
+
+    ApplicationUser user = _dbContext.ApplicationUsersDbSet.FirstOrDefault(p => p.Id == id);
+
+    if (user == null) // check for NotFound
+    {
+        _apiResponse.StatusCode = HttpStatusCode.NotFound;
+        _apiResponse.Success = false;
+        return NotFound(_apiResponse);
+    }
+
+    _apiResponse.Result = user;
+    _apiResponse.StatusCode = HttpStatusCode.OK;
+    return Ok(_apiResponse);
+}
+```
+
+![](./img/103.png)
+![](./img/104.png)
+
+### 7.1.3. UserController.cs --> DeleteUser()
+
+```cs
+[HttpDelete("{id}")]
+public async Task<ActionResult<ApiResponse>> DeleteUser(string id)
+{
+    try
+    {
+        if (id == 0.ToString())
+        {
+            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+            _apiResponse.Success = false;
+            return BadRequest();
+        }
+
+        ApplicationUser userRetrievedFromDb = await _dbContext.ApplicationUsersDbSet.FindAsync(id);
+
+        if (userRetrievedFromDb == null)
+        {
+            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+            _apiResponse.Success = false;
+            return BadRequest();
+        }
+
+        _dbContext.ApplicationUsersDbSet.Remove(userRetrievedFromDb);
+        _dbContext.SaveChanges();
+        _apiResponse.StatusCode = HttpStatusCode.NoContent;
+
+        return Ok(_apiResponse);
+
+    }
+    catch (Exception ex)
+    {
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+    }
+
+    return _apiResponse;
+}
+```
 
 # 8. Despliegue de la API en Azure
 

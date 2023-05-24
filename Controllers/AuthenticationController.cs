@@ -132,6 +132,7 @@ namespace eFoodDelivery_API.Controllers
             newUser.Email = registerRequestDTO.UserName; // by the moment, we will keep the email as the UserName
             newUser.NormalizedEmail = registerRequestDTO.UserName.ToUpper();
             newUser.Name = registerRequestDTO.Name;
+            newUser.PhoneNumber = registerRequestDTO.PhoneNumber;
 
             try
             {
