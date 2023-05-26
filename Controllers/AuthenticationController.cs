@@ -5,8 +5,10 @@ using eFoodDelivery_API.Tools;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
@@ -51,7 +53,17 @@ namespace eFoodDelivery_API.Controllers
                 _apiResponse.Result = new LoginResponseDTO();
                 _apiResponse.StatusCode = HttpStatusCode.BadRequest;
                 _apiResponse.Success = false;
-                _apiResponse.ErrorsList.Add("Username or Password is incorrect");
+                _apiResponse.ErrorsList.Add("Usuario o Contraseña incorrecto");
+
+                return BadRequest(_apiResponse);
+            }
+            // if the email given by the new user is not confirmed yet --> BadRequest
+            else if (!userRetrievedFromDb.EmailConfirmed)
+            {
+                _apiResponse.Result = new LoginResponseDTO();
+                _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                _apiResponse.Success = false;
+                _apiResponse.ErrorsList.Add("Este email aún no ha sido confirmado");
 
                 return BadRequest(_apiResponse);
             }
@@ -96,7 +108,7 @@ namespace eFoodDelivery_API.Controllers
             {
                 _apiResponse.StatusCode = HttpStatusCode.BadRequest;
                 _apiResponse.Success = false;
-                _apiResponse.ErrorsList.Add("Username or Password is incorrect");
+                _apiResponse.ErrorsList.Add("Usuario o Contraseña incorrecto");
 
                 return BadRequest(_apiResponse);
             }
@@ -133,6 +145,7 @@ namespace eFoodDelivery_API.Controllers
             newUser.NormalizedEmail = registerRequestDTO.UserName.ToUpper();
             newUser.Name = registerRequestDTO.Name;
             newUser.PhoneNumber = registerRequestDTO.PhoneNumber;
+            newUser.EmailConfirmed = false;
 
             try
             {
@@ -142,6 +155,10 @@ namespace eFoodDelivery_API.Controllers
                 // now it's time to assign a role to the new user
                 if (result.Succeeded)
                 {
+                    // retrieve the new user created and send the email verification
+                    ApplicationUser user = _dbContext.ApplicationUsersDbSet.FirstOrDefault(p => p.Email == newUser.Email);
+                    EmailUtils.SendVerificationEmail(user.Id, user.Email, user.Name);
+                    
                     // if the role we want to create doesn't exists yet
                     if (!_roleManager.RoleExistsAsync(Constants.ROLE_ADMIN).GetAwaiter().GetResult()) // like we can't use await in conditions, we have to use the method GetAwaiter()
                     {
@@ -172,6 +189,52 @@ namespace eFoodDelivery_API.Controllers
             _apiResponse.ErrorsList.Add("Error occurred during registration");
 
             return BadRequest(_apiResponse);
+        }
+
+
+        [HttpGet("confirmEmail/{id}")]
+        public async Task<ActionResult<ApiResponse>> ActivateUser(string id)
+        {
+            try
+            {
+                // retrieve the new user registered by the id
+                ApplicationUser user = _dbContext.ApplicationUsersDbSet.FirstOrDefault(u => u.Id == id);
+                
+                // check if the email gicen by the new user is not conformed yet, then confirm that email
+                if (!user.EmailConfirmed)
+                {
+                    user.EmailConfirmed = true;
+                    // apply the changes in this user
+                    _dbContext.Entry(user).State = EntityState.Modified;
+                    
+                    try
+                    {
+                        await _dbContext.SaveChangesAsync();
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        if (!_dbContext.ApplicationUsersDbSet.Any(u => u.Id == id))
+                        {
+                            return NotFound();
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                }
+
+                _apiResponse.StatusCode = HttpStatusCode.OK;
+                _apiResponse.Success = true;
+                return Ok(_apiResponse);
+            }
+            catch (Exception ex)
+            {
+                _apiResponse.Success = false;
+                _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+            }
+
+            return _apiResponse;
         }
     }
 }

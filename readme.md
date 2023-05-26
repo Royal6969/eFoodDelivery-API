@@ -75,7 +75,10 @@
     - [3.4.1. AuthenticationTestController.cs --\> GetAuthentication()](#341-authenticationtestcontrollercs----getauthentication)
     - [3.4.2. AuthenticationTestController.cs --\> GetAuthorization(int id)](#342-authenticationtestcontrollercs----getauthorizationint-id)
     - [3.4.3. Configurar la Autentificación en el Program.cs](#343-configurar-la-autentificación-en-el-programcs)
-  - [3.5. Añadiendo seguridad a Swagger](#35-añadiendo-seguridad-a-swagger)
+  - [3.6. Enviar un email de verificación al registrar un nuevo usuario](#36-enviar-un-email-de-verificación-al-registrar-un-nuevo-usuario)
+    - [Tools --\> EmailUtils.cs](#tools----emailutilscs)
+    - [AuthenticationController.cs --\> ActivateUser()](#authenticationcontrollercs----activateuser)
+  - [3.6. Añadiendo seguridad a Swagger](#36-añadiendo-seguridad-a-swagger)
 - [4. Cart y CartItem](#4-cart-y-cartitem)
   - [4.1. Entities --\> Cart.cs](#41-entities----cartcs)
   - [4.2. Entities --\> CartItem.cs](#42-entities----cartitemcs)
@@ -1395,7 +1398,102 @@ Una vez configurado todo esto, si ejecutamos la API y vamos a nuestro método de
 
 ![](./img/45.png)
 
-## 3.5. Añadiendo seguridad a Swagger
+## 3.6. Enviar un email de verificación al registrar un nuevo usuario
+
+Cuando un usuario nuevo se registra en nuestra aplicación, debemos enviarle un email con un enlace dentro, para que al pulsarlo, activemos verdaderamente a ese usuario, y que a partir de ese momento, sí pueda hacer login, y de mientras que no haga click en tal enlace y no confirme el email que puso en el registro, no podrá iniciar sesión.
+
+### Tools --> EmailUtils.cs
+
+```cs
+public class EmailUtils
+{
+    public static void SendVerificationEmail(string userId, string userEmail, string userName)
+    {
+         // SMTP client setup for Gmail
+        SmtpClient smtpClient = new SmtpClient("smtp.gmail.com");
+        smtpClient.Port = 587;
+        smtpClient.Credentials = new NetworkCredential("efooddelivery.noreply@gmail.com", "gzwahdpshxyxfwiq");
+        smtpClient.EnableSsl = true;
+
+        // creating the email
+        MailMessage mensaje = new MailMessage();
+        mensaje.From = new MailAddress("efooddelivery.noreply@gmail.com");
+        mensaje.To.Add(userEmail);
+        mensaje.Subject = "eFoodDelivery - Verificación de correo electrónico";
+
+        // HTML email content
+        mensaje.IsBodyHtml = true;
+        mensaje.Body = $"<h3>Hola " + userName + "!</h3><br/>" +
+            $"<p>Necesitamos que confirmes esta dirección de correo electrónico haciendo&nbsp;<a href='https://efooddelivery-api.azurewebsites.net/api/Authentication/confirmEmail/{userId}'>click aquí</a></p>";
+
+        try
+        {
+            // send email
+            smtpClient.Send(mensaje);
+            Console.WriteLine("Correo electrónico enviado correctamente.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al enviar el correo electrónico: " + ex.Message);
+        }
+    }
+}
+```
+
+### AuthenticationController.cs --> ActivateUser()
+
+```cs
+[HttpGet("confirmEmail/{id}")]
+public async Task<ActionResult<ApiResponse>> ActivateUser(string id)
+{
+    try
+    {
+        // retrieve the new user registered by the id
+        ApplicationUser user = _dbContext.ApplicationUsersDbSet.FirstOrDefault(u => u.Id == id);
+                
+        // check if the email gicen by the new user is not conformed yet, then confirm that email
+        if (!user.EmailConfirmed)
+        {
+            user.EmailConfirmed = true;
+            // apply the changes in this user
+            _dbContext.Entry(user).State = EntityState.Modified;
+                    
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_dbContext.ApplicationUsersDbSet.Any(u => u.Id == id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        _apiResponse.StatusCode = HttpStatusCode.OK;
+        _apiResponse.Success = true;
+        return Ok(_apiResponse);
+    }
+    catch (Exception ex)
+    {
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+    }
+
+    return _apiResponse;
+}
+```
+
+**Nota:** hay que llamar al método en el endpoint del Register. Una vez que se crea el nuevo usuario, se recupera y se llama al método del *EmailUtils* aportando el id, email y nombre del nuevo usuario que hemos recuperado. Por otra parte, en el endpoint del Login, añadimos una condición más de que si aún no se ha confirmado el email, pues devolvemos un BadRequest, ya que la entidad del ApplicationUser tiene un campo que es el EmailConfirmed.
+
+![](./img/104.png)
+
+## 3.6. Añadiendo seguridad a Swagger
 
 Continuando con el test del endpoint de la autentificación, llegamos a obtener el error específico del 401.
 
