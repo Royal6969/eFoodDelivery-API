@@ -3090,6 +3090,10 @@ Y con esto, la API ya ha sido totalmente desplegada y es completamenete funciona
 
 ### 21. [Deploying the Web API to Azure with Dotnet command line: Field inventory management](https://learn.microsoft.com/en-us/power-apps/guidance/fusion-dev-ebook/05-creating-publishing-web-api-in-azure)
 
+### 22. [Sending Confirmation Email in ASP.NET Core Identity](https://www.tektutorialshub.com/asp-net-core/sending-confirmation-email-in-asp-net-core-identity/)
+
+### 23. [Creating Password Reset feature in ASP.NET Core Identity](https://www.yogihosting.com/aspnet-core-identity-password-reset/)
+
 ## Inteligencias Artificiales usadas como ayuda y orientación
 
 ### 1. [OpenAI --> ChatGPT](https://chat.openai.com/chat)
