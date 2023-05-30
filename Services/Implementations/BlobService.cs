@@ -6,13 +6,23 @@ namespace eFoodDelivery_API.Services.Implementations
 {
     public class BlobService : IBlobService
     {
+        // dependencies to inject
         private readonly BlobServiceClient _blobServiceClient;
 
+        // dependency injection
         public BlobService(BlobServiceClient blobServiceClient)
         {
             _blobServiceClient = blobServiceClient;
         }
 
+
+
+        /// <summary>
+        /// 1º method to get a blob
+        /// </summary>
+        /// <param name="blobName"></param>
+        /// <param name="containerName"></param>
+        /// <returns>the URI for this blob</returns>
         public async Task<string> GetBlob(string blobName, string containerName)
         {
             // we have to get the container client, because in Azure we can have multiple containers for storage images
@@ -24,6 +34,15 @@ namespace eFoodDelivery_API.Services.Implementations
             return blobClient.Uri.AbsoluteUri;
         }
 
+
+
+        /// <summary>
+        /// 2º method to upload a new blob
+        /// </summary>
+        /// <param name="blobName"></param>
+        /// <param name="containerName"></param>
+        /// <param name="file"></param>
+        /// <returns>GetBlob or null</returns>
         public async Task<string> UploadBlob(string blobName, string containerName, IFormFile file)
         {
             // we have to get the container client, because in Azure we can have multiple containers for storage images
@@ -47,6 +66,14 @@ namespace eFoodDelivery_API.Services.Implementations
                 return "";
         }
 
+
+
+        /// <summary>
+        /// 3º method to delete a blob
+        /// </summary>
+        /// <param name="blobName"></param>
+        /// <param name="containerName"></param>
+        /// <returns>delete blob</returns>
         public async Task<bool> DeleteBlob(string blobName, string containerName)
         {
             // we have to get the container client, because in Azure we can have multiple containers for storage images

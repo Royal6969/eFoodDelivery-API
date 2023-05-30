@@ -31,6 +31,11 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 1º endpoint to get all products from db
+        /// </summary>
+        /// <returns>Ok with apiResponse complete</returns>
         [HttpGet]
         public async Task<IActionResult> GetProducts()
         {
@@ -42,6 +47,12 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 2º endpoint to get a product by its id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns>BadResquest, NotFound or Ok with apiResponse</returns>
         [HttpGet("{id:int}", Name = "GetProduct")] // like this method has a parameter, I need to specify what parameter is (name:type) // also specify a Name for the action method in CreateProduct()
         public async Task<IActionResult> GetProduct(int id)
         {
@@ -67,6 +78,12 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 3º endpoint to create a new product
+        /// </summary>
+        /// <param name="productCreateDTO"></param>
+        /// <returns>BadRequest or CreateAtRoute with apiResponse</returns>
         [HttpPost]
         [Authorize(Roles = Constants.ROLE_ADMIN)]
         public async Task<ActionResult<ApiResponse>> CreateProduct([FromForm] ProductCreateDTO productCreateDTO) // I'm not using [FromBody] and I'm using [FromForm] bacause we also need to upload an image when we creating a product
@@ -115,6 +132,13 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 4º endpoint to update a product
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="productUpdateDTO"></param>
+        /// <returns>BadResquest or Ok with apiResponse</returns>
         [HttpPut("{id:int}")]
         [Authorize(Roles = Constants.ROLE_ADMIN)]
         public async Task<ActionResult<ApiResponse>> UpdateProduct(int id, [FromForm] ProductUpdateDTO productUpdateDTO) // I'm not using [FromBody] and I'm using [FromForm] bacause we also need to upload an image when we creating a product
@@ -179,6 +203,12 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 5º endpoint to delete a product by its id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns>BadRequest or Ok with apiResponse</returns>
         [HttpDelete("{id:int}")]
         [Authorize(Roles = Constants.ROLE_ADMIN)]
         public async Task<ActionResult<ApiResponse>> DeleteProduct(int id)

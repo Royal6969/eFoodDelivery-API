@@ -35,5 +35,37 @@ namespace eFoodDelivery_API.Tools
                 Console.WriteLine("Error al enviar el correo electrónico: " + ex.Message);
             }
         }
+
+
+        public static void SendCodeEmail(string userEmail, string userName, string verificationCode)
+        {
+            // SMTP client setup for Gmail
+            SmtpClient smtpClient = new SmtpClient("smtp.gmail.com");
+            smtpClient.Port = 587;
+            smtpClient.Credentials = new NetworkCredential("efooddelivery.noreply@gmail.com", "gzwahdpshxyxfwiq");
+            smtpClient.EnableSsl = true;
+
+            // creating the email
+            MailMessage mensaje = new MailMessage();
+            mensaje.From = new MailAddress("efooddelivery.noreply@gmail.com");
+            mensaje.To.Add(userEmail);
+            mensaje.Subject = "eFoodDelivery - Código para restablecer la contraseña";
+
+            // HTML email content
+            mensaje.IsBodyHtml = true;
+            mensaje.Body = $"<h3>Hola " + userName + "!</h3><br/>" +
+                $"<p><h2>{verificationCode}</h2></p>";
+
+            try
+            {
+                // send email
+                smtpClient.Send(mensaje);
+                Console.WriteLine("Correo electrónico enviado correctamente.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error al enviar el correo electrónico: " + ex.Message);
+            }
+        }
     }
 }

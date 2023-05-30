@@ -29,6 +29,16 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 1º endpoint to get all orders in db
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="orderSearch"></param>
+        /// <param name="orderStatus"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns>Ok with apiResponse complete</returns>
         [HttpGet]
         [Authorize]
         public async Task<ActionResult<ApiResponse>> GetOrders(
@@ -113,6 +123,12 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 2º endpoint to get an order by its id
+        /// </summary>
+        /// <param name="orderId"></param>
+        /// <returns>BadRequest, NotFound or Ok with apiResponse</returns>
         [HttpGet("{orderId:int}")] // like this method has a parameter, I need to specify what parameter is (name:type)
         public async Task<ActionResult<ApiResponse>> GetOrder(int orderId)
         {
@@ -150,6 +166,12 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 3º endpoint to create a new order
+        /// </summary>
+        /// <param name="orderCreateDTO"></param>
+        /// <returns>Ok with the apiResponse</returns>
         [HttpPost]
         public async Task<ActionResult<ApiResponse>> CreateOrder([FromBody] OrderCreateDTO orderCreateDTO) // with [FromBody] we will get an object of order
         {
@@ -216,6 +238,13 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 4º endpoint to update an order
+        /// </summary>
+        /// <param name="orderId"></param>
+        /// <param name="orderUpdateDTO"></param>
+        /// <returns>BAdRequest or Ok with apiResponse</returns>
         // when we are working with order, we are not updating all the properties, so we have few basic properties that could be updated in OrderUpdateDTO
         [HttpPut("{orderId:int}")]
         public async Task<ActionResult<ApiResponse>> UpdateOrder(int orderId, [FromBody] OrderUpdateDTO orderUpdateDTO)

@@ -28,6 +28,12 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 1º endpoint to create a PaymentIntent in Stripe
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns>BadRequest or Ok with apiResponse</returns>
         // when we're making a payment, we will require the user id because based on that user id, we will generate a payment intent
         // because from their shopping cart we need to find out what is their order total price
         [HttpPost]

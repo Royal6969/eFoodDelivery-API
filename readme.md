@@ -75,10 +75,14 @@
     - [3.4.1. AuthenticationTestController.cs --\> GetAuthentication()](#341-authenticationtestcontrollercs----getauthentication)
     - [3.4.2. AuthenticationTestController.cs --\> GetAuthorization(int id)](#342-authenticationtestcontrollercs----getauthorizationint-id)
     - [3.4.3. Configurar la Autentificación en el Program.cs](#343-configurar-la-autentificación-en-el-programcs)
-  - [3.6. Enviar un email de verificación al registrar un nuevo usuario](#36-enviar-un-email-de-verificación-al-registrar-un-nuevo-usuario)
+  - [3.5. Enviar un email de verificación al registrar un nuevo usuario](#35-enviar-un-email-de-verificación-al-registrar-un-nuevo-usuario)
     - [Tools --\> EmailUtils.cs](#tools----emailutilscs)
     - [AuthenticationController.cs --\> ActivateUser()](#authenticationcontrollercs----activateuser)
-  - [3.6. Añadiendo seguridad a Swagger](#36-añadiendo-seguridad-a-swagger)
+  - [3.6. Implementar el proceso de recuperación y cambio de contraseña](#36-implementar-el-proceso-de-recuperación-y-cambio-de-contraseña)
+    - [3.6.1. 1º Endpoint para enviar un email con un código al usuario](#361-1º-endpoint-para-enviar-un-email-con-un-código-al-usuario)
+    - [3.6.2. 2º Endpoint para verificar el código que hemos recibido por email](#362-2º-endpoint-para-verificar-el-código-que-hemos-recibido-por-email)
+    - [3.6.3. 3º Endpoint para efectuar el cambio de la contraseña del usuario](#363-3º-endpoint-para-efectuar-el-cambio-de-la-contraseña-del-usuario)
+  - [3.7. Añadiendo seguridad a Swagger](#37-añadiendo-seguridad-a-swagger)
 - [4. Cart y CartItem](#4-cart-y-cartitem)
   - [4.1. Entities --\> Cart.cs](#41-entities----cartcs)
   - [4.2. Entities --\> CartItem.cs](#42-entities----cartitemcs)
@@ -1398,7 +1402,7 @@ Una vez configurado todo esto, si ejecutamos la API y vamos a nuestro método de
 
 ![](./img/45.png)
 
-## 3.6. Enviar un email de verificación al registrar un nuevo usuario
+## 3.5. Enviar un email de verificación al registrar un nuevo usuario
 
 Cuando un usuario nuevo se registra en nuestra aplicación, debemos enviarle un email con un enlace dentro, para que al pulsarlo, activemos verdaderamente a ese usuario, y que a partir de ese momento, sí pueda hacer login, y de mientras que no haga click en tal enlace y no confirme el email que puso en el registro, no podrá iniciar sesión.
 
@@ -1491,9 +1495,166 @@ public async Task<ActionResult<ApiResponse>> ActivateUser(string id)
 
 **Nota:** hay que llamar al método en el endpoint del Register. Una vez que se crea el nuevo usuario, se recupera y se llama al método del *EmailUtils* aportando el id, email y nombre del nuevo usuario que hemos recuperado. Por otra parte, en el endpoint del Login, añadimos una condición más de que si aún no se ha confirmado el email, pues devolvemos un BadRequest, ya que la entidad del ApplicationUser tiene un campo que es el EmailConfirmed.
 
-![](./img/104.png)
+![](./img/105.png)
 
-## 3.6. Añadiendo seguridad a Swagger
+## 3.6. Implementar el proceso de recuperación y cambio de contraseña
+
+### 3.6.1. 1º Endpoint para enviar un email con un código al usuario
+
+```cs
+[HttpPost("SendEmailToRecoverPassword")]
+public async Task<IActionResult> SendEmailToRecoverPassword([FromBody] string email)
+{
+    // when the user tries to login in base his username, we have to retrieve that user from db
+    ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet
+        .FirstOrDefault(user => user.UserName.ToLower() == email.ToLower());
+
+    if (userRetrievedFromDb != null)
+    {
+        try
+        {
+            userRetrievedFromDb.Code = CodeUtils.GenerateCode();
+            _dbContext.Entry(userRetrievedFromDb).State = EntityState.Modified;
+            await _dbContext.SaveChangesAsync();
+
+            EmailUtils.SendCodeEmail(email, userRetrievedFromDb.Name, userRetrievedFromDb.Code);
+
+            _apiResponse.StatusCode = HttpStatusCode.OK;
+            _apiResponse.Success = true;
+            return Ok(_apiResponse);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
+            _apiResponse.Success = false;
+            _apiResponse.ErrorsList.Add("Ha ocurrido un error mientras se enviaba el email de recuperación. Inténtelo más tarde.");
+            _apiResponse.ErrorsList.Add(ex.ToString());
+
+            return StatusCode((int)HttpStatusCode.InternalServerError, _apiResponse);
+        }
+    }
+
+    _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+    _apiResponse.Success = false;
+    _apiResponse.ErrorsList.Add("Ha ocurrido un error enviando el email de recuperación");
+
+    return BadRequest(_apiResponse);
+}
+```
+
+También tenemos que crear un nuevo método en la clase de *EMailUtils*
+
+```cs
+public static void SendCodeEmail(string userEmail, string userName, string verificationCode)
+{
+    // SMTP client setup for Gmail
+    SmtpClient smtpClient = new SmtpClient("smtp.gmail.com");
+    smtpClient.Port = 587;
+    smtpClient.Credentials = new NetworkCredential("efooddelivery.noreply@gmail.com", "gzwahdpshxyxfwiq");
+    smtpClient.EnableSsl = true;
+
+    // creating the email
+    MailMessage mensaje = new MailMessage();
+    mensaje.From = new MailAddress("efooddelivery.noreply@gmail.com");
+    mensaje.To.Add(userEmail);
+    mensaje.Subject = "eFoodDelivery - Código para restablecer la contraseña";
+
+    // HTML email content
+    mensaje.IsBodyHtml = true;
+    mensaje.Body = $"<h3>Hola " + userName + "!</h3><br/>" +
+        $"<p><h2>{verificationCode}</h2></p>";
+
+    try
+    {
+        // send email
+        smtpClient.Send(mensaje);
+        Console.WriteLine("Correo electrónico enviado correctamente.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Error al enviar el correo electrónico: " + ex.Message);
+    }
+}
+```
+
+![](./img/106.png)
+![](./img/107.png)
+![](./img/108.png)
+
+### 3.6.2. 2º Endpoint para verificar el código que hemos recibido por email
+
+```cs
+[HttpPost("VerifyCode")]
+public async Task<IActionResult> VerifyCode([FromBody] VerifyCodeDTO verifyCodeDTO)
+{
+    // when the user tries to login in base his username, we have to retrieve that user from db
+    ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet
+        .FirstOrDefault(user => 
+            (user.UserName.ToLower() == verifyCodeDTO.Email.ToLower()) && (user.Code == verifyCodeDTO.Code));
+
+    if (userRetrievedFromDb != null)
+    {
+        _apiResponse.StatusCode = HttpStatusCode.OK;
+        _apiResponse.Success = true;
+        return Ok(_apiResponse);
+    }
+
+    _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+    _apiResponse.Success = false;
+    _apiResponse.ErrorsList.Add("El códido no coincide con el que se ha enviado en el correo de recuperación.");
+
+    return BadRequest(_apiResponse);
+}
+```
+
+![](./img/109.png)
+![](./img/110.png)
+
+### 3.6.3. 3º Endpoint para efectuar el cambio de la contraseña del usuario
+
+```cs
+[HttpPost("ChangeUserPassword")]
+public async Task<IActionResult> ChangeUserPassword([FromBody] NewPasswordDTO newPasswordDTO)
+{
+    // when the user tries to login in base his username, we have to retrieve that user from db
+    ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet
+        .FirstOrDefault(user => (user.UserName.ToLower() == newPasswordDTO.Email.ToLower()) && (user.Code == newPasswordDTO.Code));
+
+    if (userRetrievedFromDb != null)
+    {
+        var user = await _userManager.FindByIdAsync(userRetrievedFromDb.Id);
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await _userManager.ResetPasswordAsync(user, token, newPasswordDTO.Password);
+
+        _apiResponse.StatusCode = HttpStatusCode.OK;
+        _apiResponse.Success = true;
+        return Ok(_apiResponse);
+    }
+
+    _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+    _apiResponse.Success = false;
+    _apiResponse.ErrorsList.Add("Ha ocurrido un error mientras se cambiaba la contraseña.");
+
+    return BadRequest(_apiResponse);
+}
+```
+
+![](./img/111.png)
+![](./img/112.png)
+
+**Nota:** para que finalmente este último endpoint funcione, necesitamos añadir al *Program.cs* los proveedores de tokens por defecto
+
+```cs
+...
+// Add Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()  // to scaffold Identity
+    .AddDefaultTokenProviders()  // to add standar providers to generate tokens
+    .AddTokenProvider<EmailTokenProvider<ApplicationUser>>("Email");  // to generate token for email sending
+...
+```
+
+## 3.7. Añadiendo seguridad a Swagger
 
 Continuando con el test del endpoint de la autentificación, llegamos a obtener el error específico del 401.
 

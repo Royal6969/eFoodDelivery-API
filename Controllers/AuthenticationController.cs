@@ -38,11 +38,18 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 1º endpoint to login users
+        /// </summary>
+        /// <param name="loginRequestDTO"></param>
+        /// <returns>Ok or BadRequest with apiResponse</returns>
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDTO)
         {
             // when the user tries to login in base his username, we have to retrieve that user from db
-            ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == loginRequestDTO.UserName.ToLower());
+            ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet
+                .FirstOrDefault(user => user.UserName.ToLower() == loginRequestDTO.UserName.ToLower());
 
             // we can use a Identity Helper Method to check the password
             bool valid = await _userManager.CheckPasswordAsync(userRetrievedFromDb, loginRequestDTO.Password);
@@ -53,7 +60,7 @@ namespace eFoodDelivery_API.Controllers
                 _apiResponse.Result = new LoginResponseDTO();
                 _apiResponse.StatusCode = HttpStatusCode.BadRequest;
                 _apiResponse.Success = false;
-                _apiResponse.ErrorsList.Add("Usuario o Contraseña incorrecto");
+                _apiResponse.ErrorsList.Add("Usuario o Contraseña incorrecto.");
 
                 return BadRequest(_apiResponse);
             }
@@ -63,7 +70,7 @@ namespace eFoodDelivery_API.Controllers
                 _apiResponse.Result = new LoginResponseDTO();
                 _apiResponse.StatusCode = HttpStatusCode.BadRequest;
                 _apiResponse.Success = false;
-                _apiResponse.ErrorsList.Add("Este email aún no ha sido confirmado");
+                _apiResponse.ErrorsList.Add("Este email aún no ha sido confirmado. Revise su correo electrónico.");
 
                 return BadRequest(_apiResponse);
             }
@@ -108,7 +115,7 @@ namespace eFoodDelivery_API.Controllers
             {
                 _apiResponse.StatusCode = HttpStatusCode.BadRequest;
                 _apiResponse.Success = false;
-                _apiResponse.ErrorsList.Add("Usuario o Contraseña incorrecto");
+                _apiResponse.ErrorsList.Add("Usuario o Contraseña incorrecto.");
 
                 return BadRequest(_apiResponse);
             }
@@ -122,18 +129,25 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 2º endpoint to register users
+        /// </summary>
+        /// <param name="registerRequestDTO"></param>
+        /// <returns>Ok or BadRequest with apiResponse</returns>
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO registerRequestDTO)
         {
             // check if the new user alredy exists
-            ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.UserName.ToLower() == registerRequestDTO.UserName.ToLower());
+            ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet
+                .FirstOrDefault(user => user.UserName.ToLower() == registerRequestDTO.UserName.ToLower());
 
             // if the user alredy exists --> Error message and BadRequest
             if (userRetrievedFromDb != null)
             {
                 _apiResponse.StatusCode = HttpStatusCode.BadRequest;
                 _apiResponse.Success = false;
-                _apiResponse.ErrorsList.Add("UserName alredy exists");
+                _apiResponse.ErrorsList.Add("Ese email ya está en uso. Pruebe con otra dirección de correo.");
 
                 return BadRequest(_apiResponse);
             }
@@ -156,8 +170,8 @@ namespace eFoodDelivery_API.Controllers
                 if (result.Succeeded)
                 {
                     // retrieve the new user created and send the email verification
-                    ApplicationUser user = _dbContext.ApplicationUsersDbSet.FirstOrDefault(p => p.Email == newUser.Email);
-                    EmailUtils.SendVerificationEmail(user.Id, user.Email, user.Name);
+                    ApplicationUser newUserCreatedBefore = _dbContext.ApplicationUsersDbSet.FirstOrDefault(user => user.Email == newUser.Email);
+                    EmailUtils.SendVerificationEmail(newUserCreatedBefore.Id, newUserCreatedBefore.Email, newUserCreatedBefore.Name);
                     
                     // if the role we want to create doesn't exists yet
                     if (!_roleManager.RoleExistsAsync(Constants.ROLE_ADMIN).GetAwaiter().GetResult()) // like we can't use await in conditions, we have to use the method GetAwaiter()
@@ -181,17 +195,29 @@ namespace eFoodDelivery_API.Controllers
             }
             catch (Exception ex)
             {
+                // Return a generic user-friendly error message
+                _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                _apiResponse.Success = false;
+                _apiResponse.ErrorsList.Add("Ha ocurrido un error durante el registro. Inténtelo más tarde.");
+                _apiResponse.ErrorsList.Add(ex.ToString());
 
+                return BadRequest(_apiResponse);
             }
 
             _apiResponse.StatusCode = HttpStatusCode.BadRequest;
             _apiResponse.Success = false;
-            _apiResponse.ErrorsList.Add("Error occurred during registration");
+            _apiResponse.ErrorsList.Add("Ha ocurrido un error durante el registro. Inténtelo más tarde.");
 
             return BadRequest(_apiResponse);
         }
 
 
+
+        /// <summary>
+        /// 3º endpoint to confirm the email given in registration and activate that user
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns>Ok or BadRequest with apiResponse</returns>
         [HttpGet("confirmEmail/{id}")]
         public async Task<ActionResult<ApiResponse>> ActivateUser(string id)
         {
@@ -203,23 +229,35 @@ namespace eFoodDelivery_API.Controllers
                 // check if the email gicen by the new user is not conformed yet, then confirm that email
                 if (!user.EmailConfirmed)
                 {
-                    user.EmailConfirmed = true;
-                    // apply the changes in this user
-                    _dbContext.Entry(user).State = EntityState.Modified;
+                    //user.EmailConfirmed = true;
+                    //// apply the changes in this user
+                    //_dbContext.Entry(user).State = EntityState.Modified;
                     
                     try
                     {
+                        user.EmailConfirmed = true;
+                        _dbContext.Entry(user).State = EntityState.Modified;
                         await _dbContext.SaveChangesAsync();
+
+                        _apiResponse.StatusCode = HttpStatusCode.OK;
+                        _apiResponse.Success = true;
+                        return Ok(_apiResponse);
                     }
-                    catch (DbUpdateConcurrencyException)
+                    catch (DbUpdateConcurrencyException ex)
                     {
-                        if (!_dbContext.ApplicationUsersDbSet.Any(u => u.Id == id))
+                        if (!_dbContext.ApplicationUsersDbSet.Any(user => user.Id == id))
                         {
                             return NotFound();
                         }
                         else
                         {
-                            throw;
+                            //throw;
+                            _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
+                            _apiResponse.Success = false;
+                            _apiResponse.ErrorsList.Add("Ha ocurrido un error mientras se confirmaba el usuario. Inténtelo más tarde.");
+                            _apiResponse.ErrorsList.Add(ex.ToString());
+
+                            return StatusCode((int)HttpStatusCode.InternalServerError, _apiResponse);
                         }
                     }
                 }
@@ -235,6 +273,121 @@ namespace eFoodDelivery_API.Controllers
             }
 
             return _apiResponse;
+        }
+
+
+
+        /// <summary>
+        /// 4º endpoint to send email to change the user password - init proccess for ForgotPassword
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns>Ok or BadRequest with apiResponse</returns>
+        [HttpPost("SendEmailToRecoverPassword")]
+        public async Task<IActionResult> SendEmailToRecoverPassword([FromBody] string email)
+        {
+            // when the user tries to login in base his username, we have to retrieve that user from db
+            ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet
+                .FirstOrDefault(user => user.UserName.ToLower() == email.ToLower());
+
+            if (userRetrievedFromDb != null)
+            {
+                //userRetrievedFromDb.Code = CodeUtils.GenerateCode();
+                //// apply the changes in this user
+                //_dbContext.Entry(userRetrievedFromDb).State = EntityState.Modified;
+
+                try
+                {
+                    userRetrievedFromDb.Code = CodeUtils.GenerateCode();
+                    _dbContext.Entry(userRetrievedFromDb).State = EntityState.Modified;
+                    await _dbContext.SaveChangesAsync();
+
+                    EmailUtils.SendCodeEmail(email, userRetrievedFromDb.Name, userRetrievedFromDb.Code);
+
+                    _apiResponse.StatusCode = HttpStatusCode.OK;
+                    _apiResponse.Success = true;
+                    return Ok(_apiResponse);
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
+                    _apiResponse.Success = false;
+                    _apiResponse.ErrorsList.Add("Ha ocurrido un error mientras se enviaba el email de recuperación. Inténtelo más tarde.");
+                    _apiResponse.ErrorsList.Add(ex.ToString());
+
+                    return StatusCode((int)HttpStatusCode.InternalServerError, _apiResponse);
+                }
+
+                //_apiResponse.StatusCode = HttpStatusCode.OK;
+                //_apiResponse.Success = true;
+                //return Ok(_apiResponse);
+            }
+
+            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+            _apiResponse.Success = false;
+            _apiResponse.ErrorsList.Add("Ha ocurrido un error enviando el email de recuperación");
+
+            return BadRequest(_apiResponse);
+        }
+
+
+
+        /// <summary>
+        /// 5º endpoint to verify the code given in the email we sent to user in 4º endpoint before
+        /// </summary>
+        /// <param name="verifyCodeDTO"></param>
+        /// <returns>Ok or BadRequest with apiResponse</returns>
+        [HttpPost("VerifyCode")]
+        public async Task<IActionResult> VerifyCode([FromBody] VerifyCodeDTO verifyCodeDTO)
+        {
+            // when the user tries to login in base his username, we have to retrieve that user from db
+            ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet
+                .FirstOrDefault(user => 
+                    (user.UserName.ToLower() == verifyCodeDTO.Email.ToLower()) && (user.Code == verifyCodeDTO.Code));
+
+            if (userRetrievedFromDb != null)
+            {
+                _apiResponse.StatusCode = HttpStatusCode.OK;
+                _apiResponse.Success = true;
+                return Ok(_apiResponse);
+            }
+
+            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+            _apiResponse.Success = false;
+            _apiResponse.ErrorsList.Add("El códido no coincide con el que se ha enviado en el correo de recuperación.");
+
+            return BadRequest(_apiResponse);
+        }
+
+
+
+        /// <summary>
+        /// 6º endpoint to allow user to change the password once code is verified with 5º endpoint before
+        /// </summary>
+        /// <param name="newPasswordDTO"></param>
+        /// <returns>Ok or BadRequest with apiResponse</returns>
+        [HttpPost("ChangeUserPassword")]
+        public async Task<IActionResult> ChangeUserPassword([FromBody] NewPasswordDTO newPasswordDTO)
+        {
+            // when the user tries to login in base his username, we have to retrieve that user from db
+            ApplicationUser userRetrievedFromDb = _dbContext.ApplicationUsersDbSet
+                .FirstOrDefault(user => (user.UserName.ToLower() == newPasswordDTO.Email.ToLower()) && (user.Code == newPasswordDTO.Code));
+
+            if (userRetrievedFromDb != null)
+            {
+                var user = await _userManager.FindByIdAsync(userRetrievedFromDb.Id);
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var result = await _userManager.ResetPasswordAsync(user, token, newPasswordDTO.Password);
+
+                _apiResponse.StatusCode = HttpStatusCode.OK;
+                _apiResponse.Success = true;
+                return Ok(_apiResponse);
+            }
+
+            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+            _apiResponse.Success = false;
+            _apiResponse.ErrorsList.Add("Ha ocurrido un error mientras se cambiaba la contraseña.");
+
+            return BadRequest(_apiResponse);
         }
     }
 }

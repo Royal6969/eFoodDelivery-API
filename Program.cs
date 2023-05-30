@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Stripe;
 using System.Text;
 
 /************************************************************************************************************/
@@ -28,7 +29,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 // Add Identity
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()  // to scaffold Identity
+    .AddDefaultTokenProviders()  // to add standar providers to generate tokens
+    .AddTokenProvider<EmailTokenProvider<ApplicationUser>>("Email");  // to generate token for email sending
 
 // to turn off the default configuration for Identity in Register // only for development
 builder.Services.Configure<IdentityOptions>(options =>

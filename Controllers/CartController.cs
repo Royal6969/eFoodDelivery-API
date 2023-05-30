@@ -26,6 +26,12 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+        /// <summary>
+        /// 1º endpoint to get a cart by userId, and if userId it's not given, it will retrieve all carts in db
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns>Ok with the apiResponse</returns>
         [HttpGet]
         public async Task<ActionResult<ApiResponse>> GetCart(string userId)
         {
@@ -76,6 +82,15 @@ namespace eFoodDelivery_API.Controllers
         }
 
 
+
+
+        /// <summary>
+        /// 2º endpoint to create a new cart, update a cart, or remove a cart
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="productId"></param>
+        /// <param name="updateQuantity"></param>
+        /// <returns>BadRequest or apiResponse complete</returns>
         // we need a userId to find out which user's shopping cart are we working with
         // then we want to find out the productId that user wants to either add to the shopping cart update or remove
         // finally we need a counter by which the product needs to be updated

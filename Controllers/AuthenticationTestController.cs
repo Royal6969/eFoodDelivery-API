@@ -10,6 +10,10 @@ namespace eFoodDelivery_API.Controllers
     [ApiController]
     public class AuthenticationTestController : ControllerBase
     {
+        /// <summary>
+        /// 1º endpoint to test HOC in react
+        /// </summary>
+        /// <returns>a successful message</returns>
         [HttpGet]
         [Authorize] // if we want to get some endpoint to be accessed by only authenticated users, we have to add this tag
         public async Task<ActionResult<string>> GetAuthentication()
@@ -18,6 +22,13 @@ namespace eFoodDelivery_API.Controllers
             return "You're authenticated successfully";
         }
 
+
+
+        /// <summary>
+        /// 2º endpoint to test HOC in react
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns>a successful message</returns>
         [HttpGet("{id:int}")]
         [Authorize(Roles = Constants.ROLE_ADMIN)] // if we want that some endpoint needs to be accessed only with an admin role, we have to specify the rol
         public async Task<ActionResult<string>> GetAuthorization(int id)
