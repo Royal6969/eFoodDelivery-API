@@ -130,9 +130,13 @@
     - [7.1.1. UserController.cs --\> GetUsers()](#711-usercontrollercs----getusers)
     - [7.1.2. UserController.cs --\> GetUser()](#712-usercontrollercs----getuser)
     - [7.1.3. UserController.cs --\> DeleteUser()](#713-usercontrollercs----deleteuser)
-- [8. Despliegue de la API en Azure](#8-despliegue-de-la-api-en-azure)
-  - [8.1. Prueba de Ejecución en entorno de producción](#81-prueba-de-ejecución-en-entorno-de-producción)
-  - [8.2. Enlace público a la API desplegada en internet](#82-enlace-público-a-la-api-desplegada-en-internet)
+- [8. Logs](#8-logs)
+  - [8.1. Entities --\> Logger](#81-entities----logger)
+  - [8.2. ApplicationDbContext --\> LoggerDbSet](#82-applicationdbcontext----loggerdbset)
+  - [8.3. Controllers --\> LoggerController.cs](#83-controllers----loggercontrollercs)
+- [9. Despliegue de la API en Azure](#9-despliegue-de-la-api-en-azure)
+  - [9.1. Prueba de Ejecución en entorno de producción](#91-prueba-de-ejecución-en-entorno-de-producción)
+  - [9.2. Enlace público a la API desplegada en internet](#92-enlace-público-a-la-api-desplegada-en-internet)
 - [Webgrafía y Enlaces de Interés](#webgrafía-y-enlaces-de-interés)
     - [1. Introduction to Identity on ASP.NET Core](#1-introduction-to-identity-on-aspnet-core)
     - [2. How can I change the table names when using ASP.NET Identity?](#2-how-can-i-change-the-table-names-when-using-aspnet-identity)
@@ -158,6 +162,7 @@
     - [22. Sending Confirmation Email in ASP.NET Core Identity](#22-sending-confirmation-email-in-aspnet-core-identity)
     - [23. Creating Password Reset feature in ASP.NET Core Identity](#23-creating-password-reset-feature-in-aspnet-core-identity)
     - [24. How To Start Logging With NLog](#24-how-to-start-logging-with-nlog)
+    - [25. Azure Logging for Asp.Net Core Developers](#25-azure-logging-for-aspnet-core-developers)
   - [Inteligencias Artificiales usadas como ayuda y orientación](#inteligencias-artificiales-usadas-como-ayuda-y-orientación)
     - [1. OpenAI --\> ChatGPT](#1-openai----chatgpt)
     - [2. Visual Studio Extension --\> GitHub Copilot](#2-visual-studio-extension----github-copilot)
@@ -2961,7 +2966,115 @@ public async Task<ActionResult<ApiResponse>> DeleteUser(string id)
 }
 ```
 
-# 8. Despliegue de la API en Azure
+# 8. Logs
+
+## 8.1. Entities --> Logger
+
+```cs
+[Table("dwh_logger", Schema = "dwh_efooddelivery_api")]
+public class Logger
+{
+    [Column("Md_uuid")]
+    [Display(Name = "Md_uuid")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public Guid Md_uuid { get; set; } = Guid.NewGuid();
+
+    [Column("Md_date")]
+    [Display(Name = "Md_date")]
+    [DataType(DataType.DateTime)]
+    [DisplayFormat(DataFormatString = "{0:dd-MM-yyyy}", ApplyFormatInEditMode = true)]
+    public DateTime Md_date { get; set; } = DateTime.Now;
+
+    [Key]
+    [Column("Id")]
+    [Display(Name = "Id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
+
+    [Required]
+    [Column("Log")]
+    [Display(Name = "Log")]
+    public string Log { get; set; }
+}
+```
+
+## 8.2. ApplicationDbContext --> LoggerDbSet
+
+```cs
+public DbSet<Logger> LoggerDbSet { get; set; }
+```
+
+## 8.3. Controllers --> LoggerController.cs
+
+```cs
+// [Route("api/[controller]")] // instead a dynamic route, if I change the controller name, the route does not get updated
+[Route("api/Logger")]
+[ApiController]
+public class LoggerController : ControllerBase
+{
+    // dependencies to inject
+    private readonly ApplicationDbContext _dbContext; // read property for our context
+    protected ApiResponse _apiResponse; // property for our API response
+
+    // dependency injection
+    public LoggerController(ApplicationDbContext dbContext) // dependency injection
+    {
+        _dbContext = dbContext;
+        _apiResponse = new ApiResponse();
+    }
+
+
+    [HttpGet]
+    public async Task<IActionResult> GetLogs()
+    {
+        _apiResponse.Result = _dbContext.LoggerDbSet;
+        _apiResponse.StatusCode = HttpStatusCode.OK;
+        return Ok(_apiResponse);
+    }
+
+
+
+    [HttpPost]
+    public async Task<ActionResult<ApiResponse>> CreateLog(string log) // I'm not using [FromBody] and I'm using [FromForm] bacause we also need to upload an image when we creating a product
+    {
+        try
+        {
+            Logger newLog = new Logger();
+                
+            if (!log.IsNullOrEmpty())
+            {
+                newLog.Log = log;
+
+                _dbContext.LoggerDbSet.Add(newLog);
+                _dbContext.SaveChanges();
+
+                _apiResponse.Result = newLog;
+                _apiResponse.StatusCode = HttpStatusCode.Created;
+                return Ok(_apiResponse);
+            }
+            else
+            {
+                _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+                _apiResponse.Success = false;
+                return BadRequest();
+            }     
+        }
+        catch (Exception ex)
+        {
+            _apiResponse.Success = false;
+            _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+        }
+
+        return _apiResponse;
+    }
+}
+```
+
+![](./img/128.png)
+![](./img/129.png)
+![](./img/130.png)
+
+# 9. Despliegue de la API en Azure
 
 El proceso normal para desplegar la API en Azure desde el mismo VS2022 sería, primero darle al click derecho sobre el *csproj.cs* (debajo de la misma solución en el explorador de soluciones) y seleccionar *Publicar*, y seleccionar *Azure App Service (windows)*, y si estamos previamente logueados con nuestra cuenta de Microsoft en VS2022, se nos abre como un marco de opciones donde podemos crear un nuevo *Azure App Service* sin salir de VS2022 y sin tener que ir a hacerlo a Azure...
 
@@ -3045,11 +3158,11 @@ Y con esto, la API ya ha sido totalmente desplegada y es completamenete funciona
 ![](./img/Deploy1/25.png)
 ![](./img/Deploy1/26.png)
 
-## 8.1. Prueba de Ejecución en entorno de producción
+## 9.1. Prueba de Ejecución en entorno de producción
 
 [Demostración de la API desplegada en Azure](https://user-images.githubusercontent.com/80839621/230026623-debb51c5-dbde-4eae-af5c-4f5c84b97e8e.mp4)
 
-## 8.2. Enlace público a la API desplegada en internet
+## 9.2. Enlace público a la API desplegada en internet
 
 [Swagger Documentation --> eFoodDelivery-API](https://efooddelivery-api.azurewebsites.net/index.html)
 
@@ -3102,6 +3215,8 @@ Y con esto, la API ya ha sido totalmente desplegada y es completamenete funciona
 ### 23. [Creating Password Reset feature in ASP.NET Core Identity](https://www.yogihosting.com/aspnet-core-identity-password-reset/)
 
 ### 24. [How To Start Logging With NLog](https://betterstack.com/community/guides/logging/how-to-start-logging-with-nlog/)
+
+### 25. [Azure Logging for Asp.Net Core Developers](https://www.youtube.com/watch?v=jHKUvROGyR0&ab_channel=Codewrinkles)
 
 ## Inteligencias Artificiales usadas como ayuda y orientación
 
