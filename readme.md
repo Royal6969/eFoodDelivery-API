@@ -155,6 +155,9 @@
     - [19. Accept a payment - Create a PaymentIntent with .NET](#19-accept-a-payment---create-a-paymentintent-with-net)
     - [20. Easily Deploy a .NET 7 API to Azure! \[2023 Tutorial\]](#20-easily-deploy-a-net-7-api-to-azure-2023-tutorial)
     - [21. Deploying the Web API to Azure with Dotnet command line: Field inventory management](#21-deploying-the-web-api-to-azure-with-dotnet-command-line-field-inventory-management)
+    - [22. Sending Confirmation Email in ASP.NET Core Identity](#22-sending-confirmation-email-in-aspnet-core-identity)
+    - [23. Creating Password Reset feature in ASP.NET Core Identity](#23-creating-password-reset-feature-in-aspnet-core-identity)
+    - [24. How To Start Logging With NLog](#24-how-to-start-logging-with-nlog)
   - [Inteligencias Artificiales usadas como ayuda y orientación](#inteligencias-artificiales-usadas-como-ayuda-y-orientación)
     - [1. OpenAI --\> ChatGPT](#1-openai----chatgpt)
     - [2. Visual Studio Extension --\> GitHub Copilot](#2-visual-studio-extension----github-copilot)
@@ -185,7 +188,11 @@
     - [Creamos una nueva migración y la pusheamos a la BBDD](#creamos-una-nueva-migración-y-la-pusheamos-a-la-bbdd)
   - [4. Obtener una nueva Clave Secreta API en Stripe](#4-obtener-una-nueva-clave-secreta-api-en-stripe)
   - [5. Enlace al espacio de trabajo y al tablero del proyecto en Trello](#5-enlace-al-espacio-de-trabajo-y-al-tablero-del-proyecto-en-trello)
-  - [6. Diagrama de Gantt del proyecto API](#6-diagrama-de-gantt-del-proyecto-api)
+  - [6. Cómo crear un fichero log](#6-cómo-crear-un-fichero-log)
+    - [6.1. Fichero log en local](#61-fichero-log-en-local)
+    - [6.2. Fichero log en Azure --\> App Service --\> Registros de App Service y Kudu Console](#62-fichero-log-en-azure----app-service----registros-de-app-service-y-kudu-console)
+    - [6.3. Fichero log en Azure --\> Cuenta de Almacenamiento --\> Contenedor](#63-fichero-log-en-azure----cuenta-de-almacenamiento----contenedor)
+  - [7. Diagrama de Gantt del proyecto API](#7-diagrama-de-gantt-del-proyecto-api)
 
 
 ## 0.0 Crear el proyecto web API en Visual Studio 2022
@@ -3094,6 +3101,8 @@ Y con esto, la API ya ha sido totalmente desplegada y es completamenete funciona
 
 ### 23. [Creating Password Reset feature in ASP.NET Core Identity](https://www.yogihosting.com/aspnet-core-identity-password-reset/)
 
+### 24. [How To Start Logging With NLog](https://betterstack.com/community/guides/logging/how-to-start-logging-with-nlog/)
+
 ## Inteligencias Artificiales usadas como ayuda y orientación
 
 ### 1. [OpenAI --> ChatGPT](https://chat.openai.com/chat)
@@ -3340,6 +3349,164 @@ remove-migration
 
 [Enlace a Trello - Espacio de Trabajo y Tablero del proyecto eFoodDelivery-API](https://trello.com/invite/b/zKAYLKfs/ATTIcaa8e34fc79debfff441e0330b4e99f41A2260A8/efooddelivery-api)
 
-## 6. Diagrama de Gantt del proyecto API
+## 6. Cómo crear un fichero log
+
+### 6.1. Fichero log en local
+
+Intalamos el paquete Nuget de nLog (v5.2.0).
+
+Creamos un fichero de configuración en la raíz del proyecto.
+
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- XSD manual extracted from package NLog.Schema: https://www.nuget.org/packages/NLog.Schema -->
+
+<nlog xmlns="http://www.nlog-project.org/schemas/NLog.xsd"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      autoReload="true"
+      throwExceptions="false"
+	  internalLogFile="c:\\logs\\console-example-internal.log"
+      internalLogLevel="Info">
+>
+
+	<!-- the targets to write to -->
+	<targets>
+		<!-- write logs to the files -->
+		<target xsi:type="File" name="all_logs_file" fileName="c:\\logs\\all.log"/>
+		<target xsi:type="File" name="important_logs_file" fileName="c:\\logs\\important.log"/>
+		<!-- write logs to the console-->
+		<target xsi:type="Console" name="logconsole" />
+	</targets>
+
+	<!-- rules to map from logger name to target -->
+	<rules>
+		<logger name="*" minlevel="Trace" writeTo="logconsole" />
+		<logger name="*" minlevel="Debug" writeTo="all_logs_file" />
+		<logger name="*" minlevel="Warn" writeTo="important_logs_file" />
+	</rules>
+</nlog>
+```
+
+```cs
+// logging
+logger.Trace("Some verbose log");
+logger.Debug("Some debug log");
+logger.Info("Person1: {@person}", userRetrievedFromDb.Name);
+logger.Warn("Warning accrued at {now}");
+logger.Error("Error accrued at {now}");
+logger.Fatal("Serious problem with car {@car}");
+```
+
+![](./img/113.png)
+![](./img/114.png)
+
+### 6.2. Fichero log en Azure --> App Service --> Registros de App Service y Kudu Console
+
+Primero tenemos que instalar un par de paquetes más de Azure
+
+![](./img/115.png)
+
+Configuramos los Registros de App Service
+
+![](./img/116.png)
+![](./img/117.png)
+
+Añadimos el servicio al *Program.cs*
+
+```cs
+// add services to logging and create a file in Azure
+builder.Logging.AddAzureWebAppDiagnostics();
+// for App Service --> App Service Logs --> Kudu Console
+builder.Services.Configure<AzureFileLoggerOptions>(options =>
+{
+    options.FileName = "logs-";
+    options.FileSizeLimit = 50 * 1024;
+    options.RetainedFileCountLimit = 5;
+});
+```
+
+Y en el *appsettings.json*
+
+```json
+"Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    },
+    "AzureAppServiceFile": {
+      "LogLevel": {
+        "Microsoft": "None",
+        "Microsoft.AspNetCore": "None",
+        "Microsoft.EntityFrameworkCore": "None",
+        "Microsoft.Hosting": "None"
+      }
+    }
+  },
+```
+
+Y si ahora publicamos la API, y hacemos una prueba ejecutando el endpoint del Get() del ejemplo del WeatherForecast, y nos vamos a la consola Kudu...
+
+![](./img/118.png)
+![](./img/119.png)
+![](./img/120.png)
+![](./img/121.png)
+![](./img/122.png)
+![](./img/123.png)
+
+### 6.3. Fichero log en Azure --> Cuenta de Almacenamiento --> Contenedor
+
+También podemos crear el fichero del log en un contenedor de una cuenta de almacenamiento, por acceder a él con más facilidad y claridad
+
+Para ello añadiríamos en el *Program.cs*
+
+```cs
+// for Storage Account --> Container --> mylogs
+builder.Services.Configure<AzureBlobLoggerOptions>(options =>
+{
+    options.BlobName = "log.txt";
+});
+```
+
+Y también el el *appsettings.json*
+
+```json
+"Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    },
+    "AzureAppServiceFile": {
+      "LogLevel": {
+        "Microsoft": "None",
+        "Microsoft.AspNetCore": "None",
+        "Microsoft.EntityFrameworkCore": "None",
+        "Microsoft.Hosting": "None"
+      }
+    },
+    "AzureAppServiceBlob": {
+      "LogLevel": {
+        "Microsoft": "None",
+        "Microsoft.AspNetCore": "None",
+        "Microsoft.EntityFrameworkCore": "None",
+        "Microsoft.Hosting": "None"
+      }
+    }
+  },
+```
+
+Ahora nos tendríamos que crear una nueva cuenta de almacenamiento, y dentro de ella, un nuevo contenedor
+
+![](./img/124.png)
+
+Luego, si volvemos al App Service --> Registros del App Service, configuramos un par de cosas más
+
+![](./img/125.png)
+
+Volvemos a publicar nuestra API y volvemos a ejecutar el endpoint del Get() de lal controlador de prueba del WeatherForecast, y volvemos al contenedor nuevo para ver el resultado
+
+![](./img/126.png)
+![](./img/127.png)
+
+## 7. Diagrama de Gantt del proyecto API
 
 [Estimación de los tiempos para completar las tareas de los diferentes sprints del proyecto](./eFoodDelivery-API---Gantt-Project-Chart.pdf)

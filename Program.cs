@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.AzureAppServices;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Stripe;
@@ -79,6 +80,21 @@ builder.Services.AddSingleton<IBlobService, BlobService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
+// add services to logging and create a file in Azure
+builder.Logging.AddAzureWebAppDiagnostics();
+// for App Service --> App Service Logs --> Kudu Console
+builder.Services.Configure<AzureFileLoggerOptions>(options =>
+{
+    options.FileName = "logs-";
+    options.FileSizeLimit = 50 * 1024;
+    options.RetainedFileCountLimit = 5;
+});
+// for Storage Account --> Container --> mylogs
+builder.Services.Configure<AzureBlobLoggerOptions>(options =>
+{
+    options.BlobName = "log.txt";
+});
 
 //////////////////////////////////////////// Swagger Security /////////////////////////////////////////////
 OpenApiSecurityScheme openApiSecurityScheme1 = new OpenApiSecurityScheme();

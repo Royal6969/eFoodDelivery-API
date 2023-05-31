@@ -86,3 +86,8 @@ C:\Users\Sergio DC\Desktop\eFoodDelivery-API\obj\Release\net7.0\refint\eFoodDeli
 C:\Users\Sergio DC\Desktop\eFoodDelivery-API\obj\Release\net7.0\eFoodDelivery-API.pdb
 C:\Users\Sergio DC\Desktop\eFoodDelivery-API\obj\Release\net7.0\eFoodDelivery-API.genruntimeconfig.cache
 C:\Users\Sergio DC\Desktop\eFoodDelivery-API\obj\Release\net7.0\ref\eFoodDelivery-API.dll
+C:\Users\Sergio DC\Desktop\eFoodDelivery-API\bin\Release\net7.0\nlog.config
+C:\Users\Sergio DC\Desktop\eFoodDelivery-API\bin\Release\net7.0\Microsoft.ApplicationInsights.dll
+C:\Users\Sergio DC\Desktop\eFoodDelivery-API\bin\Release\net7.0\Microsoft.Extensions.Logging.ApplicationInsights.dll
+C:\Users\Sergio DC\Desktop\eFoodDelivery-API\bin\Release\net7.0\Microsoft.Extensions.Logging.AzureAppServices.dll
+C:\Users\Sergio DC\Desktop\eFoodDelivery-API\bin\Release\net7.0\NLog.dll

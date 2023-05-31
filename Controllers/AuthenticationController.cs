@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using NLog;
+using Stripe;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
@@ -20,21 +22,26 @@ namespace eFoodDelivery_API.Controllers
     [ApiController]
     public class AuthenticationController : ControllerBase
     {
+        // create a static logger field for nLog
+        // private static Logger logger = LogManager.GetCurrentClassLogger();
+
         // dependencies to inject 
         private readonly ApplicationDbContext _dbContext;
         protected ApiResponse _apiResponse;
         private string _JWTsecretKey;
         private readonly UserManager<ApplicationUser> _userManager; // Identity helper method
         private readonly RoleManager<IdentityRole> _roleManager;    // Identity helper methods
+        private readonly ILogger<AuthenticationController> _logger; // for App Service logging to Kudu console and container in storage account 
 
         // dependency injection
-        public AuthenticationController(ApplicationDbContext dbContext, IConfiguration configuration, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager) // using this configuration, we can access to appsettings.json
+        public AuthenticationController(ApplicationDbContext dbContext, IConfiguration configuration, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ILogger<AuthenticationController> logger) // using this configuration, we can access to appsettings.json
         {
             _dbContext = dbContext;
             _apiResponse = new ApiResponse();
             _JWTsecretKey = configuration.GetValue<string>("ApiSecrets:JWTsecret"); //  and we can populate the JWTsecretKey by this way
             _userManager = userManager;
             _roleManager = roleManager;
+            _logger = logger;
         }
 
 
@@ -124,7 +131,7 @@ namespace eFoodDelivery_API.Controllers
             _apiResponse.StatusCode = HttpStatusCode.OK;
             _apiResponse.Success = true;
             _apiResponse.Result = loginResponseDTO;
-
+            _logger.LogInformation("Ha iniciado sesión el usuario: " + userRetrievedFromDb.Email);
             return Ok(_apiResponse);
         }
 
