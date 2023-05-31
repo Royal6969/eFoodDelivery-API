@@ -2995,6 +2995,11 @@ public class Logger
     [Column("Log")]
     [Display(Name = "Log")]
     public string Log { get; set; }
+
+    [Column("Level")]
+    [Display(Name = "Level")]
+    [StringLength(20)]
+    public string Level { get; set; }
 }
 ```
 
@@ -3039,11 +3044,11 @@ public class LoggerController : ControllerBase
     {
         try
         {
-            Logger newLog = new Logger();
-                
             if (!log.IsNullOrEmpty())
             {
+                Logger newLog = new Logger();
                 newLog.Log = log;
+                newLog.Level = level;
 
                 _dbContext.LoggerDbSet.Add(newLog);
                 _dbContext.SaveChanges();
@@ -3073,6 +3078,8 @@ public class LoggerController : ControllerBase
 ![](./img/128.png)
 ![](./img/129.png)
 ![](./img/130.png)
+![](./img/131.png)
+![](./img/132.png)
 
 # 9. Despliegue de la API en Azure
 

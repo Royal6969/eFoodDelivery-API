@@ -50,15 +50,15 @@ namespace eFoodDelivery_API.Controllers
         /// <param name="log"></param>
         /// <returns></returns>
         [HttpPost]
-        public async Task<ActionResult<ApiResponse>> CreateLog(string log) // I'm not using [FromBody] and I'm using [FromForm] bacause we also need to upload an image when we creating a product
+        public async Task<ActionResult<ApiResponse>> CreateLog(string log, string level)
         {
             try
             {
-                Logger newLog = new Logger();
-                
                 if (!log.IsNullOrEmpty())
                 {
+                    Logger newLog = new Logger();
                     newLog.Log = log;
+                    newLog.Level = level;
 
                     _dbContext.LoggerDbSet.Add(newLog);
                     _dbContext.SaveChanges();
@@ -73,7 +73,6 @@ namespace eFoodDelivery_API.Controllers
                     _apiResponse.Success = false;
                     return BadRequest();
                 }
-                
             }
             catch (Exception ex)
             {

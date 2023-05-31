@@ -27,5 +27,10 @@ namespace eFoodDelivery_API.Entities
         [Column("Log")]
         [Display(Name = "Log")]
         public string Log { get; set; }
+
+        [Column("Level")]
+        [Display(Name = "Level")]
+        [StringLength(20)]
+        public string Level { get; set; }
     }
 }
