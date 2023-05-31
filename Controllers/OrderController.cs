@@ -104,7 +104,7 @@ namespace eFoodDelivery_API.Controllers
                 Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(pagination));
 
                 // aply filter for pagination
-                // so where we're returning the complete orders, we¡ll be using .Skip() and .Take() with Enumerable
+                // so where we're returning the complete orders, we'll be using .Skip() and .Take() with Enumerable
                 _apiResponse.Result = ordersRetrievedFromDb
                     .Skip((pageNumber - 1) * pageSize) // so think about pageNumber is 2, how many records we want to skip?
                     .Take(pageSize) //we want to take records base on the pageSize, if our pageSize is 10, we want to take the next 10 records to be displayed

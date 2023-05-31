@@ -7,8 +7,11 @@ using eFoodDelivery_API.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Net;
+using System.Text.Json;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace eFoodDelivery_API.Controllers
 {
@@ -35,11 +38,58 @@ namespace eFoodDelivery_API.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public async Task<IActionResult> GetLogs()
+        public async Task<ActionResult<ApiResponse>> GetLogs(
+            string logSearch, string logLevel,  // search and level are for search functionality
+            int pageNumber = 1, int pageSize = 20     // this is for pagination functionality, we'll start in page numer 1 and we'll see 20 logs per page    
+        )
         {
-            _apiResponse.Result = _dbContext.LoggerDbSet;
-            _apiResponse.StatusCode = HttpStatusCode.OK;
-            return Ok(_apiResponse);
+            try
+            {
+                IEnumerable<Logger> logsRetrievedFromDb = _dbContext.LoggerDbSet
+                    .OrderByDescending(log => log.Id) // specify the way we want to order the resulting objects
+                ;
+
+                // the first one we can check if logSearch string is not empty, then we will filter our logs by the log itself
+                // if any log have the search string within it, then we will display and assign that to log
+                if (!string.IsNullOrEmpty(logSearch))
+                {
+                    logsRetrievedFromDb = logsRetrievedFromDb.Where(log =>
+                        log.Log.ToLower().Contains(logSearch.ToLower())
+                    );
+                }
+                // similarly, if logLevel is not empty, we will filter based on status and converting to lower case
+                if (!string.IsNullOrEmpty(logLevel))
+                {
+                    logsRetrievedFromDb = logsRetrievedFromDb.Where(log => log.Level.ToLower() == logLevel.ToLower());
+                }
+                // whith that, we added the search functionality to logs
+
+                // first, create a pagination object and populate actual page, page size and records number
+                Pagination pagination = new Pagination();
+                pagination.ActualPage = pageNumber;
+                pagination.PageSize = pageSize;
+                pagination.RecordsNumber = logsRetrievedFromDb.Count();
+
+                // note that we have to add the "X-Pagination" special type for the Headers in the response to allow the pagination
+                Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(pagination));
+
+                // aply filter for pagination
+                // so where we're returning the complete logs, we'll be using .Skip() and .Take() with Enumerable
+                _apiResponse.Result = logsRetrievedFromDb
+                    .Skip((pageNumber - 1) * pageSize) // so think about pageNumber is 2, how many records we want to skip?
+                    .Take(pageSize) //we want to take records base on the pageSize, if our pageSize is 10, we want to take the next 10 records to be displayed
+                ;
+
+                _apiResponse.StatusCode = HttpStatusCode.OK;
+                return Ok(_apiResponse);
+            }
+            catch (Exception ex)
+            {
+                _apiResponse.Success = false;
+                _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+            }
+
+            return _apiResponse;
         }
 
 
