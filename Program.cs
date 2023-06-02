@@ -54,6 +54,8 @@ tokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.A
 // now I'm working locally but when I deploy the project, I'll have a certain audience like only this URL can send the token
 tokenValidationParameters.ValidateIssuer = false;
 tokenValidationParameters.ValidateAudience = false;
+tokenValidationParameters.ValidateLifetime = true;
+tokenValidationParameters.ClockSkew = TimeSpan.Zero;
 
 builder.Services.AddAuthentication(options =>
     {

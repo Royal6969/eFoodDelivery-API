@@ -164,6 +164,7 @@
     - [23. Creating Password Reset feature in ASP.NET Core Identity](#23-creating-password-reset-feature-in-aspnet-core-identity)
     - [24. How To Start Logging With NLog](#24-how-to-start-logging-with-nlog)
     - [25. Azure Logging for Asp.Net Core Developers](#25-azure-logging-for-aspnet-core-developers)
+    - [26. JWT Token Expiration and Authorization](#26-jwt-token-expiration-and-authorization)
   - [Inteligencias Artificiales usadas como ayuda y orientación](#inteligencias-artificiales-usadas-como-ayuda-y-orientación)
     - [1. OpenAI --\> ChatGPT](#1-openai----chatgpt)
     - [2. Visual Studio Extension --\> GitHub Copilot](#2-visual-studio-extension----github-copilot)
@@ -1261,7 +1262,7 @@ public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDT
             new Claim(ClaimTypes.Role, userRoles.FirstOrDefault()),
         });
     // how long the token is valid for ??
-    securityTokenDescriptor.Expires = DateTime.UtcNow.AddDays(7);
+    securityTokenDescriptor.Expires = DateTime.UtcNow.AddMinutes(10);
     // we need to use our byte[]secretKey to validate or add a signature to our token
     securityTokenDescriptor.SigningCredentials = new SigningCredentials
         (
@@ -1375,6 +1376,8 @@ tokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.A
 // now I'm working locally but when I deploy the project, I'll have a certain audience like only this URL can send the token
 tokenValidationParameters.ValidateIssuer = false;
 tokenValidationParameters.ValidateAudience = false;
+tokenValidationParameters.ValidateLifetime = true;
+tokenValidationParameters.ClockSkew = TimeSpan.Zero;
 
 builder.Services.AddAuthentication(options =>
     {
@@ -3348,6 +3351,8 @@ Y con esto, la API ya ha sido totalmente desplegada y es completamenete funciona
 ### 24. [How To Start Logging With NLog](https://betterstack.com/community/guides/logging/how-to-start-logging-with-nlog/)
 
 ### 25. [Azure Logging for Asp.Net Core Developers](https://www.youtube.com/watch?v=jHKUvROGyR0&ab_channel=Codewrinkles)
+
+### 26. [JWT Token Expiration and Authorization](https://learn.microsoft.com/en-us/answers/questions/845791/jwt-token-expiration-and-authorization)
 
 ## Inteligencias Artificiales usadas como ayuda y orientación
 
