@@ -9,7 +9,7 @@ namespace eFoodDelivery_API.DbContexts
     {
         public void Configure(EntityTypeBuilder<ApplicationUser> builder)
         {
-            builder.Property(user => user.Name).HasMaxLength(20); // to define a name for the user
+            builder.Property(user => user.Name).HasMaxLength(40); // to define a name for the user
             builder.Property(user => user.Code).HasMaxLength(6);  // to generate a code for recover password
         }
     }

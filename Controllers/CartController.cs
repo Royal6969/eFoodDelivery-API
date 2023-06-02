@@ -2,6 +2,7 @@
 using eFoodDelivery_API.DbContexts;
 using eFoodDelivery_API.Entities;
 using eFoodDelivery_API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +34,7 @@ namespace eFoodDelivery_API.Controllers
         /// <param name="userId"></param>
         /// <returns>Ok with the apiResponse</returns>
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<ApiResponse>> GetCart(string userId)
         {
             try
@@ -95,6 +97,7 @@ namespace eFoodDelivery_API.Controllers
         // then we want to find out the productId that user wants to either add to the shopping cart update or remove
         // finally we need a counter by which the product needs to be updated
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<ApiResponse>> AddOrUpdateCartItem(string userId, int productId, int updateQuantity)
         {
             ////////////////////////////////////////// Cart Rules /////////////////////////////////////////////

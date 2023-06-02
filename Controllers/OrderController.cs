@@ -130,6 +130,7 @@ namespace eFoodDelivery_API.Controllers
         /// <param name="orderId"></param>
         /// <returns>BadRequest, NotFound or Ok with apiResponse</returns>
         [HttpGet("{orderId:int}")] // like this method has a parameter, I need to specify what parameter is (name:type)
+        [Authorize]
         public async Task<ActionResult<ApiResponse>> GetOrder(int orderId)
         {
             try
@@ -173,6 +174,7 @@ namespace eFoodDelivery_API.Controllers
         /// <param name="orderCreateDTO"></param>
         /// <returns>Ok with the apiResponse</returns>
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<ApiResponse>> CreateOrder([FromBody] OrderCreateDTO orderCreateDTO) // with [FromBody] we will get an object of order
         {
             // the idea is to create a new Order object with the OrderCreateDTO we're receiving as parameter
@@ -247,6 +249,7 @@ namespace eFoodDelivery_API.Controllers
         /// <returns>BAdRequest or Ok with apiResponse</returns>
         // when we are working with order, we are not updating all the properties, so we have few basic properties that could be updated in OrderUpdateDTO
         [HttpPut("{orderId:int}")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse>> UpdateOrder(int orderId, [FromBody] OrderUpdateDTO orderUpdateDTO)
         {
             try

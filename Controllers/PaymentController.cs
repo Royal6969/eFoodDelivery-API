@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using Stripe;
+using Microsoft.AspNetCore.Authorization;
 
 namespace eFoodDelivery_API.Controllers
 {
@@ -37,6 +38,7 @@ namespace eFoodDelivery_API.Controllers
         // when we're making a payment, we will require the user id because based on that user id, we will generate a payment intent
         // because from their shopping cart we need to find out what is their order total price
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<ApiResponse>> OrderPayment(string userId)
         {
             // first we need to retrieve their shopping cart

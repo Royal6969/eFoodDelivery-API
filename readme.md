@@ -129,7 +129,8 @@
   - [7.1. Controllers --\> UserController.cs](#71-controllers----usercontrollercs)
     - [7.1.1. UserController.cs --\> GetUsers()](#711-usercontrollercs----getusers)
     - [7.1.2. UserController.cs --\> GetUser()](#712-usercontrollercs----getuser)
-    - [7.1.3. UserController.cs --\> DeleteUser()](#713-usercontrollercs----deleteuser)
+    - [7.1.3. UserController.cs --\> UpdateUser()](#713-usercontrollercs----updateuser)
+    - [7.1.4. UserController.cs --\> DeleteUser()](#714-usercontrollercs----deleteuser)
 - [8. Logs](#8-logs)
   - [8.1. Entities --\> Logger](#81-entities----logger)
   - [8.2. ApplicationDbContext --\> LoggerDbSet](#82-applicationdbcontext----loggerdbset)
@@ -2867,17 +2868,39 @@ public async Task<ActionResult<ApiResponse>> OrderPayment(string userId)
 
 ## 7.1. Controllers --> UserController.cs
 
+Antes de empezar con los endpoints de este controlador, hay que tener en cuenta de cara a los roles de los usuarios, que los roles están en una tabla distinta a la de los usuarios. Aunque .NET nos brinda algunos métodos para obtener fácilmente los roles, necesitamos crear un nuevo modelo que reuna tanto un objeto del tipo usuario como un string que sea el rol del mismo usuario en sí
+
+```cs
+public class UserWithRoleModel
+{
+    public ApplicationUser User { get; set; }
+    public string Role { get; set; }
+}
+```
+
 ### 7.1.1. UserController.cs --> GetUsers()
 
 ```cs
 [HttpGet]
+[Authorize(Roles = Constants.ROLE_ADMIN)]
 public async Task<ActionResult<ApiResponse>> GetUsers()
 {
     try
     {
-        IEnumerable<ApplicationUser> usersRetrievedFromDb = _dbContext.ApplicationUsersDbSet;
+        //IEnumerable<ApplicationUser> usersRetrievedFromDb = _dbContext.ApplicationUsersDbSet; // when I get users without roles at first
+        // "System.InvalidOperationException: There is already an open DataReader associated with this Connection which must be closed first
+        IEnumerable<ApplicationUser> usersRetrievedFromDb = _dbContext.ApplicationUsersDbSet.ToList();
+        List<UserWithRoleModel> usersWithRoles = new List<UserWithRoleModel>();
 
-        _apiResponse.Result = usersRetrievedFromDb;
+        // iterate all users to get their roles
+        foreach (var user in usersRetrievedFromDb)
+        {
+            string role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+            usersWithRoles.Add(new UserWithRoleModel { User = user, Role = role });
+        }
+
+        //_apiResponse.Result = usersRetrievedFromDb; // when I get users without roles at first
+        _apiResponse.Result = usersWithRoles; // return users and roles
         _apiResponse.StatusCode = HttpStatusCode.OK;
         return Ok(_apiResponse);
     }
@@ -2897,17 +2920,20 @@ public async Task<ActionResult<ApiResponse>> GetUsers()
 ### 7.1.2. UserController.cs --> GetUser()
 
 ```cs
-[HttpGet("{id}", Name = "GetUser")] // like this method has a parameter, I need to specify what parameter is (name:type)
-public async Task<IActionResult> GetUser(string id)
+[HttpGet("{id}", Name = "GetUser")]
+[Authorize(Roles = Constants.ROLE_ADMIN)]
+public async Task<ActionResult<ApiResponse>> GetUser(string id)
 {
-    if (id == 0.ToString()) // check for BadRequest
+    if (id == "0" || id.IsNullOrEmpty()) // check for BadRequest
     {
         _apiResponse.StatusCode = HttpStatusCode.BadRequest;
         _apiResponse.Success = false;
-        return BadRequest(_apiResponse);
+        return BadRequest();
     }
 
+    // retrieve the user and his role
     ApplicationUser user = _dbContext.ApplicationUsersDbSet.FirstOrDefault(p => p.Id == id);
+    string role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
 
     if (user == null) // check for NotFound
     {
@@ -2916,7 +2942,7 @@ public async Task<IActionResult> GetUser(string id)
         return NotFound(_apiResponse);
     }
 
-    _apiResponse.Result = user;
+    _apiResponse.Result = new { User = user, Role = role };
     _apiResponse.StatusCode = HttpStatusCode.OK;
     return Ok(_apiResponse);
 }
@@ -2925,15 +2951,67 @@ public async Task<IActionResult> GetUser(string id)
 ![](./img/103.png)
 ![](./img/104.png)
 
-### 7.1.3. UserController.cs --> DeleteUser()
+### 7.1.3. UserController.cs --> UpdateUser()
+
+```cs
+[HttpPut("{id}")]
+[Authorize(Roles = Constants.ROLE_ADMIN)]
+public async Task<ActionResult<ApiResponse>> UpdateUser(string id, [FromBody] string role)
+{
+    try
+    {
+        // retrieve the user by id
+        ApplicationUser userRetrievedFromDb = await _userManager.FindByIdAsync(id);
+
+        if (userRetrievedFromDb == null || id != userRetrievedFromDb.Id)
+        {
+            _apiResponse.StatusCode = HttpStatusCode.BadRequest;
+            _apiResponse.Success = false;
+            return BadRequest();
+        }
+
+        // get the user roles
+        var existingRole = await _userManager.GetRolesAsync(userRetrievedFromDb);
+
+        // if role is the same that we're receiving in request, there's nothing to do
+        if (existingRole.FirstOrDefault() == role)
+        {
+            return Ok(_apiResponse);
+        }
+
+        // delete actual role
+        await _userManager.RemoveFromRoleAsync(userRetrievedFromDb, existingRole.FirstOrDefault());
+
+        // add new role
+        await _userManager.AddToRoleAsync(userRetrievedFromDb, role);
+
+        // update the object in DB
+        _dbContext.ApplicationUsersDbSet.Update(userRetrievedFromDb);
+        _dbContext.SaveChanges();
+        _apiResponse.StatusCode = HttpStatusCode.NoContent;
+
+        return Ok(_apiResponse);
+    }
+    catch (Exception ex)
+    {
+        _apiResponse.Success = false;
+        _apiResponse.ErrorsList = new List<string>() { ex.ToString() };
+    }
+
+    return _apiResponse;
+}
+```
+
+### 7.1.4. UserController.cs --> DeleteUser()
 
 ```cs
 [HttpDelete("{id}")]
+[Authorize(Roles = Constants.ROLE_ADMIN)]
 public async Task<ActionResult<ApiResponse>> DeleteUser(string id)
 {
     try
     {
-        if (id == 0.ToString())
+        if (id == "0" || id.IsNullOrEmpty())
         {
             _apiResponse.StatusCode = HttpStatusCode.BadRequest;
             _apiResponse.Success = false;
@@ -3083,7 +3161,6 @@ public class LoggerController : ControllerBase
 
         return _apiResponse;
     }
-
 
 
     [HttpPost]

@@ -4,6 +4,7 @@ using eFoodDelivery_API.Entities;
 using eFoodDelivery_API.Models;
 using eFoodDelivery_API.Services.Implementations;
 using eFoodDelivery_API.Services.Interfaces;
+using eFoodDelivery_API.Tools;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -38,6 +39,7 @@ namespace eFoodDelivery_API.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
+        [Authorize(Roles = Constants.ROLE_ADMIN)]
         public async Task<ActionResult<ApiResponse>> GetLogs(
             string logSearch, string logLevel,  // search and level are for search functionality
             int pageNumber = 1, int pageSize = 20     // this is for pagination functionality, we'll start in page numer 1 and we'll see 20 logs per page    
