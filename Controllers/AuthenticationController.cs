@@ -236,19 +236,18 @@ namespace eFoodDelivery_API.Controllers
                 // check if the email gicen by the new user is not conformed yet, then confirm that email
                 if (!user.EmailConfirmed)
                 {
-                    //user.EmailConfirmed = true;
-                    //// apply the changes in this user
-                    //_dbContext.Entry(user).State = EntityState.Modified;
-                    
                     try
                     {
+                        // set true the EmailConfirmed field and apply the changes in db
                         user.EmailConfirmed = true;
                         _dbContext.Entry(user).State = EntityState.Modified;
                         await _dbContext.SaveChangesAsync();
 
                         _apiResponse.StatusCode = HttpStatusCode.OK;
                         _apiResponse.Success = true;
-                        return Ok(_apiResponse);
+                        // return Ok(_apiResponse);
+                        // we return a HTML page better that response only
+                        return Content(Constants.CONFIRM_EMAIL_HTML, "text/html");
                     }
                     catch (DbUpdateConcurrencyException ex)
                     {
@@ -258,7 +257,6 @@ namespace eFoodDelivery_API.Controllers
                         }
                         else
                         {
-                            //throw;
                             _apiResponse.StatusCode = HttpStatusCode.InternalServerError;
                             _apiResponse.Success = false;
                             _apiResponse.ErrorsList.Add("Ha ocurrido un error mientras se confirmaba el usuario. Inténtelo más tarde.");
@@ -298,16 +296,14 @@ namespace eFoodDelivery_API.Controllers
 
             if (userRetrievedFromDb != null)
             {
-                //userRetrievedFromDb.Code = CodeUtils.GenerateCode();
-                //// apply the changes in this user
-                //_dbContext.Entry(userRetrievedFromDb).State = EntityState.Modified;
-
                 try
                 {
+                    // generate the random code and set it in the Code field and apply the changes in db
                     userRetrievedFromDb.Code = CodeUtils.GenerateCode();
                     _dbContext.Entry(userRetrievedFromDb).State = EntityState.Modified;
                     await _dbContext.SaveChangesAsync();
 
+                    // send an email to user with the random code
                     EmailUtils.SendCodeEmail(email, userRetrievedFromDb.Name, userRetrievedFromDb.Code);
 
                     _apiResponse.StatusCode = HttpStatusCode.OK;
@@ -323,10 +319,6 @@ namespace eFoodDelivery_API.Controllers
 
                     return StatusCode((int)HttpStatusCode.InternalServerError, _apiResponse);
                 }
-
-                //_apiResponse.StatusCode = HttpStatusCode.OK;
-                //_apiResponse.Success = true;
-                //return Ok(_apiResponse);
             }
 
             _apiResponse.StatusCode = HttpStatusCode.BadRequest;
@@ -381,8 +373,11 @@ namespace eFoodDelivery_API.Controllers
 
             if (userRetrievedFromDb != null)
             {
+                // retrieve the user again
                 var user = await _userManager.FindByIdAsync(userRetrievedFromDb.Id);
+                // generate token
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                // reset password
                 var result = await _userManager.ResetPasswordAsync(user, token, newPasswordDTO.Password);
 
                 _apiResponse.StatusCode = HttpStatusCode.OK;
