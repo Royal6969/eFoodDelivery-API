@@ -19,13 +19,15 @@ namespace eFoodDelivery_API.Controllers
         protected ApiResponse _apiResponse;
         private readonly IConfiguration _configuration; // with IConfiguration we will be able to access to our appsettings.json and use our Stripe API Secret Key defined there
         private readonly ApplicationDbContext _dbContext;
+        private readonly ILogger<PaymentController> _logger; // for App Service logging to Kudu console and container in storage account 
 
         // dependency injection
-        public PaymentController(IConfiguration configuration, ApplicationDbContext dbContext)
+        public PaymentController(IConfiguration configuration, ApplicationDbContext dbContext, ILogger<PaymentController> logger)
         {
             _configuration = configuration;
             _dbContext = dbContext;
             _apiResponse = new ApiResponse();
+            _logger = logger;
         }
 
 
@@ -99,7 +101,7 @@ namespace eFoodDelivery_API.Controllers
 
             _apiResponse.Result = cartRetrievedFromDb;
             _apiResponse.StatusCode = HttpStatusCode.OK;
-
+            _logger.LogInformation("Ha creado un intento de pago el usuario con id: " + userId);
             return Ok(_apiResponse);
         }
     }

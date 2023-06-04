@@ -196,7 +196,7 @@ namespace eFoodDelivery_API.Controllers
 
                     _apiResponse.StatusCode = HttpStatusCode.OK;
                     _apiResponse.Success = true;
-
+                    _logger.LogInformation("Se ha registrado el usuario: " + newUser.Email);
                     return Ok(_apiResponse);
                 }
             }
@@ -245,6 +245,7 @@ namespace eFoodDelivery_API.Controllers
 
                         _apiResponse.StatusCode = HttpStatusCode.OK;
                         _apiResponse.Success = true;
+                        _logger.LogInformation("Ha verificado su email el usuario: " + user.Email);
                         // return Ok(_apiResponse);
                         // we return a HTML page better that response only
                         return Content(Constants.CONFIRM_EMAIL_HTML, "text/html");
@@ -308,6 +309,7 @@ namespace eFoodDelivery_API.Controllers
 
                     _apiResponse.StatusCode = HttpStatusCode.OK;
                     _apiResponse.Success = true;
+                    _logger.LogInformation("Ha solicitado restablecer la contraseña el usuario: " + userRetrievedFromDb.Email);
                     return Ok(_apiResponse);
                 }
                 catch (DbUpdateConcurrencyException ex)
@@ -347,6 +349,7 @@ namespace eFoodDelivery_API.Controllers
             {
                 _apiResponse.StatusCode = HttpStatusCode.OK;
                 _apiResponse.Success = true;
+                _logger.LogInformation("Ha verificado el código de cambio de contraseña el usuario: " + userRetrievedFromDb.Email);
                 return Ok(_apiResponse);
             }
 
@@ -382,6 +385,7 @@ namespace eFoodDelivery_API.Controllers
 
                 _apiResponse.StatusCode = HttpStatusCode.OK;
                 _apiResponse.Success = true;
+                _logger.LogInformation("Ha restablecido su contraseña el usuario: " + userRetrievedFromDb.Email);
                 return Ok(_apiResponse);
             }
 

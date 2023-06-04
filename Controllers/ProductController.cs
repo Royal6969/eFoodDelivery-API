@@ -21,13 +21,15 @@ namespace eFoodDelivery_API.Controllers
         private readonly ApplicationDbContext _dbContext; // read property for our context
         private readonly IBlobService _blobService; // read property to CreateProduct() and UpdateProduct()
         protected ApiResponse _apiResponse; // property for our API response
+        private readonly ILogger<ProductController> _logger; // for App Service logging to Kudu console and container in storage account 
 
         // dependency injection
-        public ProductController(ApplicationDbContext dbContext, IBlobService blobService) // dependency injection
+        public ProductController(ApplicationDbContext dbContext, IBlobService blobService, ILogger<ProductController> logger) // dependency injection
         {
             _dbContext = dbContext;
             _blobService = blobService;
             _apiResponse = new ApiResponse();
+            _logger = logger;
         }
 
 
@@ -116,7 +118,7 @@ namespace eFoodDelivery_API.Controllers
                     _dbContext.SaveChanges();
                     _apiResponse.Result = productToCreate;
                     _apiResponse.StatusCode = HttpStatusCode.Created;
-                    
+                    _logger.LogInformation("Se ha creado un nuevo producto con nombre: " + productToCreate.Name + ", y precio: " + productToCreate.Price);
                     // return go to GetProduct() method to view the new product created
                     return CreatedAtRoute("GetProduct", new { id = productToCreate.Id }, _apiResponse);
                 }
@@ -187,7 +189,7 @@ namespace eFoodDelivery_API.Controllers
                     _dbContext.ProductsDbSet.Update(productRetrievedFromDb);
                     _dbContext.SaveChanges();
                     _apiResponse.StatusCode = HttpStatusCode.NoContent;
-
+                    _logger.LogInformation("Se ha actualizado la información del producto con id: " + productRetrievedFromDb.Id + ", y nombre: " + productRetrievedFromDb.Name);
                     return Ok(_apiResponse);
                 }
                 else _apiResponse.Success = false;
@@ -240,7 +242,7 @@ namespace eFoodDelivery_API.Controllers
                 _dbContext.ProductsDbSet.Remove(productRetrievedFromDb);
                 _dbContext.SaveChanges();
                 _apiResponse.StatusCode = HttpStatusCode.NoContent;
-
+                _logger.LogInformation("Se ha eliminado el producto con id: " + productRetrievedFromDb.Id + ", y nombre: " + productRetrievedFromDb.Name);
                 return Ok(_apiResponse);
 
             }

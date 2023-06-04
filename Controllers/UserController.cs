@@ -21,13 +21,15 @@ namespace eFoodDelivery_API.Controllers
         private readonly ApplicationDbContext _dbContext;
         protected ApiResponse _apiResponse;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<UserController> _logger; // for App Service logging to Kudu console and container in storage account 
 
         // dependency injection
-        public UserController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager)
+        public UserController(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, ILogger<UserController> logger)
         {
             _dbContext = dbContext;
             _apiResponse = new ApiResponse();
             _userManager = userManager;
+            _logger = logger;
         }
 
 
@@ -145,7 +147,7 @@ namespace eFoodDelivery_API.Controllers
                 _dbContext.ApplicationUsersDbSet.Update(userRetrievedFromDb);
                 _dbContext.SaveChanges();
                 _apiResponse.StatusCode = HttpStatusCode.NoContent;
-
+                _logger.LogInformation("Se ha modificado el rol del usuario con id: " + userRetrievedFromDb.Id + ", e email: " + userRetrievedFromDb.Email + " del rol " + existingRole + " al nuevo rol " + role);
                 return Ok(_apiResponse);
             }
             catch (Exception ex)
@@ -189,7 +191,7 @@ namespace eFoodDelivery_API.Controllers
                 _dbContext.ApplicationUsersDbSet.Remove(userRetrievedFromDb);
                 _dbContext.SaveChanges();
                 _apiResponse.StatusCode = HttpStatusCode.NoContent;
-
+                _logger.LogInformation("Se ha eliminado el usuario con nombre: " + userRetrievedFromDb.Name + ", e email: " + userRetrievedFromDb.Email);
                 return Ok(_apiResponse);
 
             }

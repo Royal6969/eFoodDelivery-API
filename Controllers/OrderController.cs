@@ -20,12 +20,14 @@ namespace eFoodDelivery_API.Controllers
         // dependencies to inject
         private readonly ApplicationDbContext _dbContext;
         protected ApiResponse _apiResponse;
+        private readonly ILogger<OrderController> _logger; // for App Service logging to Kudu console and container in storage account 
 
         // dependency injection
-        public OrderController(ApplicationDbContext dbContext)
+        public OrderController(ApplicationDbContext dbContext, ILogger<OrderController> logger)
         {
             _dbContext = dbContext;
             _apiResponse = new ApiResponse();
+            _logger = logger;
         }
 
 
@@ -226,7 +228,7 @@ namespace eFoodDelivery_API.Controllers
                     _apiResponse.Result = newOrder;
                     newOrder.OrderDetails = null;
                     _apiResponse.StatusCode = HttpStatusCode.Created;
-
+                    _logger.LogInformation("Ha creado un nuevo pedido el usuario: " + newOrder.ClientEmail);
                     return Ok(_apiResponse);
                 }
             }
