@@ -101,7 +101,7 @@ namespace eFoodDelivery_API.Controllers
                 new Claim(ClaimTypes.Role, userRoles.FirstOrDefault()),
             });
             // how long the token is valid for ??
-            securityTokenDescriptor.Expires = DateTime.UtcNow.AddMinutes(10);
+            securityTokenDescriptor.Expires = DateTime.UtcNow.AddDays(1);
             // we need to use our byte[]secretKey to validate or add a signature to our token
             securityTokenDescriptor.SigningCredentials = new SigningCredentials
                 (
